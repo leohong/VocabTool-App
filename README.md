@@ -2,7 +2,7 @@
 
 > 一款基於「主動回想」、「動態錯題懲罰」、「間隔重複」與 Capacitor 跨平台技術的極限單字記憶 App。
 
-📦 **最新 Android APK 下載**：[VocabTool-v1.0.apk](./VocabTool-v1.0.apk)  
+📦 **最新 Android APK 下載**：[GitHub Releases 最新發佈頁面](https://github.com/leohong/VocabTool-App/releases/latest)  
 🔗 **GitHub 儲存庫網址**：[https://github.com/leohong/VocabTool-App](https://github.com/leohong/VocabTool-App)  
 📚 **內建字庫檔案**：[國中 2000 單字庫](./www/2000_單字庫.txt) | [高中 7000 單字庫](./www/7000_單字庫.txt)
 
@@ -27,7 +27,7 @@
 ## 🚀 如何開始與 APK 打包 (Getting Started & Build)
 
 ### 📲 方式一：直接安裝 APK (最快)
-1. 下載專案根目錄下的 **[VocabTool-v1.0.apk](./VocabTool-v1.0.apk)**。
+1. 前往 **[GitHub Releases 最新發佈頁面](https://github.com/leohong/VocabTool-App/releases/latest)** 下載最新版 APK。
 2. 傳送至 Android 手機並允許「安裝未知來源應用程式」即可開啟使用。
 
 ### 💻 方式二：使用 Node.js / Capacitor 在本機開發或打包
