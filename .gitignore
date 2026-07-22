@@ -27,5 +27,10 @@ Thumbs.db
 
 # AI Agent & Workspace Artifacts
 .artifacts/
+.agents/*
 !.agents/AGENTS.md
+tmp/
+temp/
+*.log
+
 
