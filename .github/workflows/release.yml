@@ -64,18 +64,22 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug
 
-      # Step 9: 重新命名與定位 APK 檔案
+      # Step 9: 重新命名與定位 APK 檔案 (動態包含版本號)
       - name: Rename and Move APK
         run: |
           mkdir -p output-apk
-          cp android/app/build/outputs/apk/debug/app-debug.apk output-apk/VocabTool-Latest.apk
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            cp android/app/build/outputs/apk/debug/app-debug.apk output-apk/VocabTool-${{ github.ref_name }}.apk
+          else
+            cp android/app/build/outputs/apk/debug/app-debug.apk output-apk/VocabTool-Latest.apk
+          fi
 
       # Step 10: 自動建立 GitHub Release 並上傳 APK
       - name: Create Release and Upload Asset
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: output-apk/VocabTool-Latest.apk
+          files: output-apk/VocabTool-*.apk
           name: Release ${{ github.ref_name }}
           body: |
              ### 🧠 極限單字特訓系統 ${{ github.ref_name }} APK 發佈
@@ -83,7 +87,7 @@ jobs:
              本版本已自動由 GitHub Actions 完成前端模組合併、Capacitor 同步與 Android 原生打包。
              
              #### 📥 安裝說明：
-             - 下載下方 **`VocabTool-Latest.apk`** 檔案至您的 Android 手機。
+             - 下載下方 **`VocabTool-${{ github.ref_name }}.apk`** 檔案至您的 Android 手機。
              - 開啟安裝並允許「安裝未知來源應用程式」即可直接執行體驗！
           draft: false
           prerelease: false
