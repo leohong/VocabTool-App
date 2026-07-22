@@ -12,6 +12,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       # Step 1: 檢出專案程式碼
