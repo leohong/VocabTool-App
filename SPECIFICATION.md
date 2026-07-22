@@ -16,9 +16,9 @@
     *   **React 18**：負責模組化 UI 渲染與狀態管理。
     *   **Tailwind CSS**：負責介面樣式排版（Glassmorphism 玻璃質感、極深色科技暗黑風格）。
     *   **Babel (Standalone)**：瀏覽器端即時轉譯。
-*   **跨裝置雲端同步 (Cloud Sync)**：
-    *   **Google Drive AppData 同步 (v1.5.0)**：支援 Google Identity Services 帳號授權登入，自動讀寫使用者個人 Google Drive 的專屬 AppData 隱藏區塊（`spaces=appDataFolder`），保護隱私不佔用主目錄。
-    *   **自訂金鑰雲端同步 (v1.4.0)**：支援輸入個人 Sync Key 進行 REST API 雙向同步。
+*   **資料儲存與備份 (Data & Backup)**：
+    *   **本地優先儲存**：所有的單字庫與學習進度皆本地化存放於 `localStorage` 中。
+    *   **手動 JSON/TXT 備份還原**：提供手動下載 `極限完整備份.json` 系統檔與 `字典/歷史殿堂.txt` 檔案，方便使用者手動進行資料的移轉與備份，100% 離線可用。
 
 
 ---
@@ -127,19 +127,15 @@ $$\text{連續拼對目標次數} = \text{Min}(\text{該字錯誤次數} \times 
 1.  **`utils/` (無狀態演算法)**：
     -   `textUtils.js`：文字清洗與遮罩處理 (`cleanApostrophe`, `maskText`, `maskExample`)。
     -   `dictionaryApi.js`：線上字典 API fetch 與 MyMemory 並行翻譯 (`fetchDictionaryData`)。
-2.  **`engines/` (傳輸層)**：
-    -   `CloudSyncEngine.js`：RESTful 雲端傳輸協議。
-    -   `GoogleDriveSyncEngine.js`：Google 隱私區 AppData 備份寫入。
-3.  **`hooks/` (React 業務狀態與生命週期)**：
+2.  **`hooks/` (React 業務狀態與生命週期)**：
     -   `useVocabState.js`：單字字典儲存、天數切換與自動儲存。
-    -   `useCloudSync.js`：OAuth2 認證狀態與備份還原調度。
-4.  **`components/` (視覺元件，純 JSX)**：
+3.  **`components/` (視覺元件，純 JSX)**：
     -   `Icons.js`：全域 SVG 元件。
-    -   `Header.js`、`Dashboard.js`、`Sessions.js`、`AudioPlayer.js`、`CloudSyncModal.js`、`Modals.js`。
-5.  **`app.js` (進入點與視圖分派)**：
+    -   `Header.js`、`Dashboard.js`、`Sessions.js`、`AudioPlayer.js`、`Modals.js`。
+4.  **`app.js` (進入點與視圖分派)**：
     -   使用上述 Custom Hooks，並依據 `view` 狀態決定分派渲染哪一個元件。
 
 ### 7.2 預編譯打包機制 (`scripts/build.js`)
 *   **原因**：Android 原生 WebView 因安全性原則不支援 AJAX 本地 JSX/JS 跨檔讀取。
-*   **作法**：透過建置腳本將 14 個模組依賴順序（Utilities ➔ Engines ➔ Hooks ➔ Components ➔ Entrypoint）進行合併，以 Babel Standalone 形式直接寫入發布用 `www/index.html` 中的單一 `<script>` 標籤中。
+*   **作法**：透過建置腳本將 10 個模組依賴順序（Utilities ➔ Hooks ➔ Components ➔ Entrypoint）進行合併，以 Babel Standalone 形式直接寫入發布用 `www/index.html` 中的單一 `<script>` 標籤中。
 

@@ -8,9 +8,8 @@
 
 *   **開發源碼目錄 (`www/js/`)**：
     *   `utils/`：純演算法與 API 工具（`textUtils.js`, `dictionaryApi.js`）。
-    *   `hooks/`：React 業務邏輯與狀態（`useVocabState.js`, `useCloudSync.js`）。
-    *   `engines/`：`CloudSyncEngine.js` (Firebase REST), `GoogleDriveSyncEngine.js` (Google Drive AppData)。
-    *   `components/`：1:1 原裝 UI 視覺元件 (`Header.js`, `Dashboard.js`, `Sessions.js`, `AudioPlayer.js`, `Modals.js`, `CloudSyncModal.js`)。
+    *   `hooks/`：React 業務邏輯與狀態（`useVocabState.js`）。
+    *   `components/`：1:1 原裝 UI 視覺元件 (`Header.js`, `Dashboard.js`, `Sessions.js`, `AudioPlayer.js`, `Modals.js`)。
     *   `app.js`：核心生命週期進入點。
 *   **發布與編譯檔 (`www/index.html`)**：
     *   由建置腳本 `scripts/build.js` 自動生成。
@@ -37,7 +36,7 @@ npx cap sync android
 
 1. **🔒 Git Push 限制**：**未經使用者明確口頭同意，絕不自動執行 `git push`！**
 2. **🎨 UI 0 變化原則**：進行重構時，務必確保原本的 Tailwind CSS 樣式、動畫、按鈕顏色與排版 100% 零偏離。
-3. **☁️ 雲端同步能力 (v1.5.0)**：支援 Google Identity Services 帳號授權，備份檔寫入個人 Google Drive 專屬 AppData 隱藏區（`spaces=appDataFolder`）。
+
 
 ---
 

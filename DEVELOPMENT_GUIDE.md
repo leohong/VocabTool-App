@@ -6,7 +6,7 @@
 
 ## 1. 專案模組架構 (Clean Modular Architecture)
 
-為了解決單一檔案過於龐大且不易維護的問題，本專案已將核心邏輯、狀態管理、雲端同步引擎與 UI 元件進行了解耦。其結構如下：
+為了解決單一檔案過於龐大且不易維護的問題，本專案已將核心邏輯、狀態管理與 UI 元件進行了解耦。其結構如下：
 
 ```mermaid
 graph TD
@@ -17,32 +17,24 @@ graph TD
         dictionaryApi.js[dictionaryApi.js: 線上 API 查詢與翻譯]
     end
     
-    subgraph Engines [2. 同步引擎 engines/]
-        CloudSyncEngine.js[CloudSyncEngine.js: Firebase REST 同步]
-        GoogleDriveSyncEngine.js[GoogleDriveSyncEngine.js: Google Drive 隱藏區備份]
-    end
-    
-    subgraph Hooks [3. 狀態鉤子 hooks/]
+    subgraph Hooks [2. 狀態鉤子 hooks/]
         useVocabState.js[useVocabState.js: 單字庫與本地緩存狀態]
-        useCloudSync.js[useCloudSync.js: 雲端同步核心調度]
     end
     
-    subgraph Components [4. 視覺元件 components/]
+    subgraph Components [3. 視覺元件 components/]
         Icons.js[Icons.js: SVG 圖示]
         Header.js[Header.js: 導覽與狀態列]
         Dashboard.js[Dashboard.js: 主控制台]
         Sessions.js[Sessions.js: 篩選/盲測/完成卡]
         AudioPlayer.js[AudioPlayer.js: 語音循環播放器]
-        CloudSyncModal.js[CloudSyncModal.js: 雲端同步設定彈窗]
         Modals.js[Modals.js: 其他輔助彈窗集]
     end
     
-    subgraph Entrypoint [5. 進入點]
+    subgraph Entrypoint [4. 進入點]
         app.js[app.js: 生命週期與路由分派]
     end
     
-    Utils --> Engines
-    Engines --> Hooks
+    Utils --> Hooks
     Hooks --> Components
     Components --> app.js
 ```
@@ -51,12 +43,9 @@ graph TD
 
 ## 2. 核心功能設計要點
 
-### ☁️ 雙軌雲端同步機制
-1. **Google Drive AppData 隱藏備份**：
-   - 採用 Google Identity Services 帳號授權，備份檔寫入個人 Google Drive 專屬 AppData 隱藏區 (`spaces=appDataFolder`)，保護用戶隱私且不佔用雲端硬碟可見空間。
-   - 由 `GoogleDriveSyncEngine.js` 實現網路傳輸，`useCloudSync.js` 維護授權與登入狀態。
-2. **Firebase Key-Value 自訂金鑰同步**：
-   - 提供基於特定金鑰的 Firebase REST 備份，方便免帳號一鍵跨裝置拉取和推送。
+### 💾 本地優先與手動資料管理
+- 本系統完全轉為純本地 (Local-first) 模式運作，無任何外部同步網路開銷或 API 相依性。
+- 提供主控制台中的 **「⬇️ J (系統完整 JSON 備份)」** 手動匯出下載與 **「⬆️ J」** 匯入還原，保障使用者資料安全。
 
 ### 🎧 聽讀特訓與盲聽系統 (`AudioPlayer.js`)
 - **拼寫語音同步機制**：播放語音時，系統會分析單字字母，依發音速度動態高亮當前拼讀的字母索引 (`activeSpellingChar`)。

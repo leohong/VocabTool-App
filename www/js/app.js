@@ -39,24 +39,7 @@ function App() {
     streak = { count: 0, lastDate: null }
   } = state;
 
-  const {
-    cloudSyncKey,
-    setCloudSyncKey,
-    cloudSyncStatus,
-    setCloudSyncStatus,
-    lastSyncTime,
-    setLastSyncTime,
-    showCloudSyncModal,
-    setShowCloudSyncModal,
-    cloudInputKey,
-    setCloudInputKey,
-    gdriveUser,
-    handleGoogleLogin,
-    handleGoogleSyncUpload,
-    handleGoogleSyncDownload,
-    performCloudPull,
-    performCloudPush
-  } = useCloudSync(dbName, dbList, setState, setVocabList);
+
 
   // ----------------------------------------
   // --- 2. 獨立 UI 狀態 ---
@@ -1589,10 +1572,6 @@ function App() {
           vocabListLength={vocabList.length}
           wordsPerDay={wordsPerDay}
           view={view}
-          cloudSyncStatus={cloudSyncStatus}
-          cloudSyncKey={cloudSyncKey}
-          setShowCloudSyncModal={setShowCloudSyncModal}
-          setCloudInputKey={setCloudInputKey}
         />
       )}
 
@@ -1708,23 +1687,7 @@ function App() {
         )}
       </main>
 
-      {/* --- Cloud Sync Modal --- */}
-      <CloudSyncModal
-        showCloudSyncModal={showCloudSyncModal}
-        setShowCloudSyncModal={setShowCloudSyncModal}
-        cloudInputKey={cloudInputKey}
-        setCloudInputKey={setCloudInputKey}
-        cloudSyncStatus={cloudSyncStatus}
-        lastSyncTime={lastSyncTime}
-        cloudSyncKey={cloudSyncKey}
-        setCloudSyncKey={setCloudSyncKey}
-        performCloudPull={performCloudPull}
-        performCloudPush={performCloudPush}
-        gdriveUser={gdriveUser}
-        handleGoogleLogin={handleGoogleLogin}
-        handleGoogleSyncUpload={handleGoogleSyncUpload}
-        handleGoogleSyncDownload={handleGoogleSyncDownload}
-      />
+
 
       {/* --- Helper Modals --- */}
       <AudioSetupModal

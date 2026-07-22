@@ -10,11 +10,7 @@ window.Header = ({
   setCurrentDay,
   vocabListLength,
   wordsPerDay,
-  view,
-  cloudSyncStatus,
-  cloudSyncKey,
-  setShowCloudSyncModal,
-  setCloudInputKey
+  view
 }) => {
   return (
     <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 bg-slate-800 p-3 sm:p-4 rounded-xl shadow-md border border-slate-700 gap-3 sm:gap-4">
@@ -42,29 +38,6 @@ window.Header = ({
             <span className="font-bold text-orange-400 text-xs tracking-wide">{streak.count} 天</span>
           </div>
         )}
-
-        {/* ☁️ 雲端同步狀態按鈕 */}
-        <button
-          type="button"
-          onClick={() => {
-            setCloudInputKey(cloudSyncKey || '');
-            setShowCloudSyncModal(true);
-          }}
-          className={`border px-2 py-1 rounded-md flex items-center gap-1.5 transition-all shadow-sm shrink-0 hover:brightness-110 select-none ${
-            cloudSyncStatus === 'synced' ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300' :
-            cloudSyncStatus === 'syncing' ? 'bg-indigo-950/40 border-indigo-500/40 text-indigo-300 animate-pulse' :
-            cloudSyncStatus === 'offline' ? 'bg-rose-950/40 border-rose-500/40 text-rose-400' :
-            'bg-slate-900 border-slate-700 text-slate-400'
-          }`}
-          title={`雲端同步狀態: ${cloudSyncStatus}。點擊開啟設定。`}
-        >
-          <span className="text-xs">
-            {cloudSyncStatus === 'synced' ? '🟢' : cloudSyncStatus === 'syncing' ? '🔄' : cloudSyncStatus === 'offline' ? '🔴' : '☁️'}
-          </span>
-          <span className="font-bold text-xs">
-            {cloudSyncStatus === 'synced' ? '雲端已同步' : cloudSyncStatus === 'syncing' ? '同步中' : cloudSyncStatus === 'offline' ? '離線' : '同步金鑰'}
-          </span>
-        </button>
 
         {/* 進度選單 */}
         <div className="ml-auto flex items-center gap-1.5 text-xs sm:text-sm text-slate-400 font-medium shrink-0">
