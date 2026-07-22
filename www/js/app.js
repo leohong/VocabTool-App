@@ -88,6 +88,7 @@ function App() {
 
   // --- 聽音背單字狀態 ---
   const [showAudioSetupModal, setShowAudioSetupModal] = useState(false);
+  const [showImportOptionsModal, setShowImportOptionsModal] = useState(false);
   const [audioSource, setAudioSource] = useState('daily'); // 'daily', 'mistakes', 'history', 'library'
   const [audioRange, setAudioRange] = useState('all'); // 'all', 'page', 'custom', 'word'
   const [audioStartIdx, setAudioStartIdx] = useState(1);
@@ -1170,6 +1171,50 @@ function App() {
     e.target.value = "";
   };
 
+  const loadBuiltInVocab = async (vocabType) => {
+    const fileName = vocabType === '7000' ? '7000_單字庫.txt' : '2000_單字庫.txt';
+    const titleName = vocabType === '7000' ? '7000 單字庫' : '2000 單字庫';
+    try {
+      const response = await fetch(`./${fileName}`);
+      if (!response.ok) {
+        throw new Error(`無法載入檔案 ${fileName}`);
+      }
+      const text = await response.text();
+      const lines = text.split("\n");
+      const importedVocab = [];
+
+      lines.forEach(line => {
+        const match = line.match(/^\d+\.\s*\[(.*?)\]\s*(.*?)\s*-->\s*(.*)/);
+        if (match) {
+          const [_, pos, en, rest] = match;
+          let zh = rest.trim();
+          let eg = "";
+          if (zh.includes(" || ")) {
+            const parts = zh.split(" || ");
+            zh = parts[0].trim();
+            eg = parts[1].trim();
+          }
+          const word = { en: en.trim(), pos: pos.trim(), zh };
+          if (eg) word.eg = eg;
+          importedVocab.push(word);
+        }
+      });
+
+      if (importedVocab.length > 0) {
+        if (window.confirm(`確定要載入內建的【${titleName}】（共 ${importedVocab.length} 字）並覆蓋目前的字庫【${dbName}】嗎？`)) {
+          setVocabList(importedVocab);
+          localStorage.setItem(`vocab_customVocab_${dbName}`, JSON.stringify(importedVocab));
+          alert(`成功載入內建【${titleName}】！共載入 ${importedVocab.length} 個單字。`);
+        }
+      } else {
+        alert("載入的內建檔案格式無法識別！");
+      }
+    } catch (err) {
+      console.error(err);
+      alert(`載入失敗：${err.message}`);
+    }
+  };
+
   const handleImportHistoryTXT = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -1607,7 +1652,7 @@ function App() {
             speechEnabled={speechEnabled}
             setSpeechEnabled={setSpeechEnabled}
             exportDictionaryTXT={exportDictionaryTXT}
-            handleImportTXT={handleImportTXT}
+            setShowImportOptionsModal={setShowImportOptionsModal}
             exportHistoryTXT={exportHistoryTXT}
             handleImportHistoryTXT={handleImportHistoryTXT}
             exportJson={exportJson}
@@ -1800,6 +1845,13 @@ function App() {
         setEditEg={setEditEg}
         speak={speak}
         handleSaveEdit={handleSaveEdit}
+      />
+
+      <ImportOptionsModal
+        showImportOptionsModal={showImportOptionsModal}
+        setShowImportOptionsModal={setShowImportOptionsModal}
+        loadBuiltInVocab={loadBuiltInVocab}
+        handleImportTXT={handleImportTXT}
       />
 
     </div>

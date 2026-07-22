@@ -30,7 +30,7 @@ window.Dashboard = ({
   speechEnabled,
   setSpeechEnabled,
   exportDictionaryTXT,
-  handleImportTXT,
+  setShowImportOptionsModal,
   exportHistoryTXT,
   handleImportHistoryTXT,
   exportJson,
@@ -242,13 +242,13 @@ window.Dashboard = ({
             >
               ⬇️ 字
             </button>
-            <label
-              className="flex-1 py-1.5 bg-slate-700 rounded text-xs text-slate-300 hover:bg-slate-600 transition-colors cursor-pointer text-center"
+            <button
+              onClick={() => setShowImportOptionsModal(true)}
+              className="flex-1 py-1.5 bg-slate-700 rounded text-xs text-slate-300 hover:bg-slate-600 transition-colors text-center"
               title="匯入字典"
             >
               ⬆️ 字
-              <input type="file" accept=".txt" onChange={handleImportTXT} className="hidden" />
-            </label>
+            </button>
           </div>
           <div className="flex gap-1">
             <button

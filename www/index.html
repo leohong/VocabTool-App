@@ -364,7 +364,7 @@ window.Dashboard = ({
   speechEnabled,
   setSpeechEnabled,
   exportDictionaryTXT,
-  handleImportTXT,
+  setShowImportOptionsModal,
   exportHistoryTXT,
   handleImportHistoryTXT,
   exportJson,
@@ -576,13 +576,13 @@ window.Dashboard = ({
             >
               ⬇️ 字
             </button>
-            <label
-              className="flex-1 py-1.5 bg-slate-700 rounded text-xs text-slate-300 hover:bg-slate-600 transition-colors cursor-pointer text-center"
+            <button
+              onClick={() => setShowImportOptionsModal(true)}
+              className="flex-1 py-1.5 bg-slate-700 rounded text-xs text-slate-300 hover:bg-slate-600 transition-colors text-center"
               title="匯入字典"
             >
               ⬆️ 字
-              <input type="file" accept=".txt" onChange={handleImportTXT} className="hidden" />
-            </label>
+            </button>
           </div>
           <div className="flex gap-1">
             <button
@@ -2365,6 +2365,96 @@ window.EditWordModal = ({
   );
 };
 
+// --- 9. 選擇匯入來源 Modal (ImportOptionsModal) ---
+window.ImportOptionsModal = ({
+  showImportOptionsModal,
+  setShowImportOptionsModal,
+  loadBuiltInVocab,
+  handleImportTXT
+}) => {
+  const fileInputRef = React.useRef(null);
+  if (!showImportOptionsModal) return null;
+
+  const onLocalFileClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-slate-800 border border-slate-700/80 w-full max-w-sm rounded-3xl shadow-2xl p-6 relative overflow-hidden animate-[fadeIn_0.2s_ease-in-out]">
+        {/* 背景裝飾微光 */}
+        <div className="absolute -top-12 -left-12 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl"></div>
+        
+        <h3 className="text-lg font-bold text-slate-100 mb-4 flex items-center gap-2 relative z-10">
+          📥 選擇匯入來源
+        </h3>
+        
+        <div className="flex flex-col gap-3 relative z-10">
+          <button
+            onClick={() => {
+              loadBuiltInVocab('2000');
+              setShowImportOptionsModal(false);
+            }}
+            className="w-full py-3 px-4 bg-slate-700/40 hover:bg-indigo-950/40 border border-slate-700/60 hover:border-indigo-800 rounded-2xl flex items-center gap-3 transition-all group text-left"
+          >
+            <span className="text-2xl group-hover:scale-110 transition-transform select-none">🎒</span>
+            <div className="min-w-0">
+              <div className="font-bold text-xs sm:text-sm text-slate-100">載入內建 2000 單字庫</div>
+              <div className="text-[10px] sm:text-xs text-slate-400 mt-0.5">系統內建，標準 8 週特訓單字</div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => {
+              loadBuiltInVocab('7000');
+              setShowImportOptionsModal(false);
+            }}
+            className="w-full py-3 px-4 bg-slate-700/40 hover:bg-indigo-950/40 border border-slate-700/60 hover:border-indigo-800 rounded-2xl flex items-center gap-3 transition-all group text-left"
+          >
+            <span className="text-2xl group-hover:scale-110 transition-transform select-none">🎓</span>
+            <div className="min-w-0">
+              <div className="font-bold text-xs sm:text-sm text-slate-100">載入內建 7000 單字庫</div>
+              <div className="text-[10px] sm:text-xs text-slate-400 mt-0.5">系統內建，進階完整挑戰單字</div>
+            </div>
+          </button>
+
+          <button
+            onClick={onLocalFileClick}
+            className="w-full py-3 px-4 bg-slate-700/40 hover:bg-indigo-950/40 border border-slate-700/60 hover:border-indigo-800 rounded-2xl flex items-center gap-3 transition-all group text-left"
+          >
+            <span className="text-2xl group-hover:scale-110 transition-transform select-none">📁</span>
+            <div className="min-w-0">
+              <div className="font-bold text-xs sm:text-sm text-slate-100">從本機選擇檔案 (.txt)</div>
+              <div className="text-[10px] sm:text-xs text-slate-400 mt-0.5">選取裝置中的單字庫 TXT 檔案</div>
+            </div>
+          </button>
+        </div>
+
+        {/* 隱藏的實際檔案選擇器 */}
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          accept=".txt" 
+          onChange={(e) => {
+            handleImportTXT(e);
+            setShowImportOptionsModal(false);
+          }} 
+          className="hidden" 
+        />
+
+        <button
+          onClick={() => setShowImportOptionsModal(false)}
+          className="mt-5 w-full py-2.5 bg-slate-900 hover:bg-slate-950 text-slate-400 hover:text-slate-300 border border-slate-800 rounded-xl text-xs font-bold transition-colors"
+        >
+          取消
+        </button>
+      </div>
+    </div>
+  );
+};
+
 
     // ==========================================
     // --- File: www/js/app.js ---
@@ -2459,6 +2549,7 @@ function App() {
 
   // --- 聽音背單字狀態 ---
   const [showAudioSetupModal, setShowAudioSetupModal] = useState(false);
+  const [showImportOptionsModal, setShowImportOptionsModal] = useState(false);
   const [audioSource, setAudioSource] = useState('daily'); // 'daily', 'mistakes', 'history', 'library'
   const [audioRange, setAudioRange] = useState('all'); // 'all', 'page', 'custom', 'word'
   const [audioStartIdx, setAudioStartIdx] = useState(1);
@@ -3541,6 +3632,50 @@ function App() {
     e.target.value = "";
   };
 
+  const loadBuiltInVocab = async (vocabType) => {
+    const fileName = vocabType === '7000' ? '7000_單字庫.txt' : '2000_單字庫.txt';
+    const titleName = vocabType === '7000' ? '7000 單字庫' : '2000 單字庫';
+    try {
+      const response = await fetch(`./${fileName}`);
+      if (!response.ok) {
+        throw new Error(`無法載入檔案 ${fileName}`);
+      }
+      const text = await response.text();
+      const lines = text.split("\n");
+      const importedVocab = [];
+
+      lines.forEach(line => {
+        const match = line.match(/^\d+\.\s*\[(.*?)\]\s*(.*?)\s*-->\s*(.*)/);
+        if (match) {
+          const [_, pos, en, rest] = match;
+          let zh = rest.trim();
+          let eg = "";
+          if (zh.includes(" || ")) {
+            const parts = zh.split(" || ");
+            zh = parts[0].trim();
+            eg = parts[1].trim();
+          }
+          const word = { en: en.trim(), pos: pos.trim(), zh };
+          if (eg) word.eg = eg;
+          importedVocab.push(word);
+        }
+      });
+
+      if (importedVocab.length > 0) {
+        if (window.confirm(`確定要載入內建的【${titleName}】（共 ${importedVocab.length} 字）並覆蓋目前的字庫【${dbName}】嗎？`)) {
+          setVocabList(importedVocab);
+          localStorage.setItem(`vocab_customVocab_${dbName}`, JSON.stringify(importedVocab));
+          alert(`成功載入內建【${titleName}】！共載入 ${importedVocab.length} 個單字。`);
+        }
+      } else {
+        alert("載入的內建檔案格式無法識別！");
+      }
+    } catch (err) {
+      console.error(err);
+      alert(`載入失敗：${err.message}`);
+    }
+  };
+
   const handleImportHistoryTXT = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -3978,7 +4113,7 @@ function App() {
             speechEnabled={speechEnabled}
             setSpeechEnabled={setSpeechEnabled}
             exportDictionaryTXT={exportDictionaryTXT}
-            handleImportTXT={handleImportTXT}
+            setShowImportOptionsModal={setShowImportOptionsModal}
             exportHistoryTXT={exportHistoryTXT}
             handleImportHistoryTXT={handleImportHistoryTXT}
             exportJson={exportJson}
@@ -4171,6 +4306,13 @@ function App() {
         setEditEg={setEditEg}
         speak={speak}
         handleSaveEdit={handleSaveEdit}
+      />
+
+      <ImportOptionsModal
+        showImportOptionsModal={showImportOptionsModal}
+        setShowImportOptionsModal={setShowImportOptionsModal}
+        loadBuiltInVocab={loadBuiltInVocab}
+        handleImportTXT={handleImportTXT}
       />
 
     </div>

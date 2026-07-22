@@ -24,6 +24,7 @@ Thumbs.db
 # Build artifacts / APKs
 *.apk
 *.aab
+screenshots/
 
 # AI Agent & Workspace Artifacts
 .artifacts/
