@@ -2,16 +2,12 @@ const fs = require('fs');
 const path = require('path');
 
 const files = [
-  'www/js/data/vocabData.js',
+  'www/js/utils/textUtils.js',
+  'www/js/utils/dictionaryApi.js',
   'www/js/CloudSyncEngine.js',
   'www/js/GoogleDriveSyncEngine.js',
-  'www/js/components/Icons.js',
-  'www/js/components/Header.js',
-  'www/js/components/Dashboard.js',
-  'www/js/components/Sessions.js',
-  'www/js/components/AudioPlayer.js',
-  'www/js/components/Modals.js',
-  'www/js/components/CloudSyncModal.js',
+  'www/js/hooks/useVocabState.js',
+  'www/js/hooks/useCloudSync.js',
   'www/js/app.js'
 ];
 
@@ -20,6 +16,8 @@ files.forEach(f => {
   const fullPath = path.resolve(__dirname, '..', f);
   if (fs.existsSync(fullPath)) {
     bundleContent += `\n    // ==========================================\n    // --- File: ${f} ---\n    // ==========================================\n` + fs.readFileSync(fullPath, 'utf8') + '\n';
+  } else {
+    console.warn(`Warning: file not found ${f}`);
   }
 });
 
