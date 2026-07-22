@@ -35,12 +35,12 @@ jobs:
       - name: Build Web Modules
         run: npm run build
 
-      # Step 5: 設定 Java (JDK 17) 環境以便編譯 Android
-      - name: Set up JDK 17
+      # Step 5: 設定 Java (JDK 21) 環境以便編譯 Android
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: '21'
 
       # Step 6: 同步 Web 資源至 Android 原生工程 (Capacitor Sync)
       - name: Capacitor Sync Android
