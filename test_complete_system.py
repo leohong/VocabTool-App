@@ -12,36 +12,27 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-PORT = 8001
 DIRECTORY = "www"
+httpd = None
+PORT = None
 
 class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=DIRECTORY, **kwargs)
 
-def is_port_open(port):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        return s.connect_ex(('localhost', port)) == 0
-
-def start_server():
-    socketserver.TCPServer.allow_reuse_address = True
-    try:
-        with socketserver.TCPServer(("", PORT), Handler) as httpd:
-            print(f"[Server] Serving files from '{DIRECTORY}' on port {PORT}...")
-            httpd.serve_forever()
-    except Exception as e:
-        print(f"[Server] Error starting server: {e}")
-
-# 1. Setup local HTTP server if not already running
-server_started = False
-if not is_port_open(PORT):
-    print(f"[Main] Port {PORT} is free. Starting background web server...")
-    server_thread = threading.Thread(target=start_server, daemon=True)
+# 1. Setup local HTTP server on a dynamically assigned free port on 127.0.0.1
+print("[Main] Starting web server on a dynamic free port...")
+socketserver.TCPServer.allow_reuse_address = True
+try:
+    httpd = socketserver.TCPServer(("127.0.0.1", 0), Handler)
+    PORT = httpd.server_address[1]
+    print(f"[Main] Web server successfully started on port {PORT}. Serving files from '{DIRECTORY}'...")
+    server_thread = threading.Thread(target=httpd.serve_forever, daemon=True)
     server_thread.start()
-    server_started = True
-    time.sleep(2) # Give server time to start
-else:
-    print(f"[Main] Port {PORT} is already in use. Assuming server is already running.")
+    time.sleep(1) # Give server a moment to spin up
+except Exception as e:
+    print(f"[Main] Error starting server: {e}")
+    sys.exit(1)
 
 # 2. Setup screenshots directory
 screenshot_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "screenshots")
@@ -73,7 +64,7 @@ wait = WebDriverWait(driver, 8)
 
 try:
     # URL to load
-    target_url = f"http://localhost:{PORT}/index.html"
+    target_url = f"http://127.0.0.1:{PORT}/index.html"
     print(f"[Main] Navigating to {target_url}...")
     driver.get(target_url)
     time.sleep(2)
@@ -293,4 +284,15 @@ except Exception as e:
     sys.exit(1)
 finally:
     print("[Main] Closing WebDriver...")
-    driver.quit()
+    try:
+        driver.quit()
+    except Exception as e:
+        print(f"[Main] Error closing WebDriver: {e}")
+    if httpd:
+        print("[Main] Shutting down web server...")
+        try:
+            httpd.shutdown()
+            httpd.server_close()
+            print("[Main] Web server shut down successfully.")
+        except Exception as e:
+            print(f"[Main] Error shutting down web server: {e}")

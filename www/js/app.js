@@ -9,7 +9,7 @@ function App() {
   // ----------------------------------------
   // --- 0. 版本管理常數 (三碼版本號規則) ---
   // ----------------------------------------
-  const APP_VERSION = "1.6.0";
+  const APP_VERSION = "1.6.1";
   const DISPLAY_VERSION = APP_VERSION.split('.').slice(0, 2).join('.');
 
   // ----------------------------------------
@@ -953,14 +953,58 @@ function App() {
   // ----------------------------------------
   // --- 4. 檔案匯入匯出與重置功能 ---
   // ----------------------------------------
-  const downloadFile = (filename, content, type) => {
-    const element = document.createElement("a");
-    const file = new Blob([content], { type });
-    element.href = URL.createObjectURL(file);
-    element.download = filename;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+  const downloadFile = async (filename, content, type) => {
+    const isNative = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+    
+    if (isNative) {
+      let writeSuccess = false;
+      try {
+        const { Filesystem } = window.Capacitor.Plugins || {};
+        const { Share } = window.Capacitor.Plugins || {};
+        
+        if (Filesystem && Share) {
+          // 在原生平台上，先寫入暫存檔案，然後透過 Share 分享/下載
+          const result = await Filesystem.writeFile({
+            path: filename,
+            data: content,
+            directory: 'CACHE',
+            encoding: 'utf8'
+          });
+          writeSuccess = true;
+          
+          await Share.share({
+            title: filename,
+            url: result.uri
+          });
+          return;
+        }
+      } catch (err) {
+        console.error("Native file export/share failed:", err);
+        // 如果檔案寫入成功，只是分享動作被使用者取消，不應該視為錯誤或觸發剪貼簿備份
+        if (writeSuccess) {
+          console.log("User cancelled share sheet or share dismissed after successful write.");
+          return;
+        }
+      }
+      
+      // 備用方案：只有當檔案寫入失敗時，才嘗試複製到剪貼簿
+      try {
+        await navigator.clipboard.writeText(content);
+        alert(`已複製匯出內容至剪貼簿！\n\n由於原生 App 限制，已自動將【${filename}】的內容複製到剪貼簿，您可以直接貼上至記事本儲存。`);
+      } catch (clipErr) {
+        console.error("Clipboard copy failed:", clipErr);
+        alert("無法匯出檔案，請確保 App 權限。");
+      }
+    } else {
+      // 網頁版：正常的瀏覽器 Blob 下載
+      const element = document.createElement("a");
+      const file = new Blob([content], { type });
+      element.href = URL.createObjectURL(file);
+      element.download = filename;
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+    }
   };
 
   const exportJson = () => {

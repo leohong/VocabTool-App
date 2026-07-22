@@ -1,15 +1,18 @@
 {
   "name": "vocabtool-app",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "極限單字特訓系統 Mobile App",
   "private": true,
   "scripts": {
-    "build": "node scripts/build.js"
+    "build": "node scripts/build.js",
+    "serve": "start python -m http.server 8001 --directory www"
   },
   "dependencies": {
     "@capacitor-community/text-to-speech": "^8.0.2",
     "@capacitor/android": "^8.4.2",
     "@capacitor/cli": "^7.6.8",
-    "@capacitor/core": "^8.4.2"
+    "@capacitor/core": "^8.4.2",
+    "@capacitor/filesystem": "^8.1.2",
+    "@capacitor/share": "^8.0.1"
   }
 }

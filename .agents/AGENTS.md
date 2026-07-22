@@ -55,7 +55,23 @@
 
 ---
 
-## 4. 完整技術手冊 (Full Documentation)
+## 4. 自動化測試與本地伺服器測試規範 (Testing & Local Server Guidelines)
+
+*   **動態連接埠分配 (Dynamic Port)**：進行本地測試或 Selenium 自動化測試時，**禁止**使用固定 HTTP 連接埠 (例如 8001)。應一律綁定連接埠 `0`（由 OS 分配閒置連接埠），並將目標連線網址指定為 `127.0.0.1`，以防 `localhost` 本機 DNS 解析失敗或 IPv6/IPv4 衝突導致連線逾時。
+*   **伺服器資源回收 (Resource Cleanup)**：測試腳本結束前（不論成功或失敗），必須在 `finally` 區塊中明確執行 `httpd.shutdown()` 和 `httpd.server_close()` 釋放線程與 Socket 資源，防止殘存殭屍程序佔用連接埠。
+*   **非阻塞本地伺服器 (Non-blocking Local Server)**：在 Windows 環境下，提供本地伺服器測試指令時，應搭配 `start` 開啟新視窗（例如 `npm run serve`），防止持久運行的伺服器行程直接卡死終端機。
+
+---
+
+## 5. Capacitor 原生平台檔案與套件處理規範 (Capacitor Native Platform Guidelines)
+
+*   **WebView 檔案下載限制 (File Export in WebView)**：Android/iOS WebView 預設會阻擋 Blob URL 下載。字庫、歷史紀錄與備份 JSON 的匯出功能必須整合 `@capacitor/filesystem` (寫入 `CACHE` 目錄) 與 `@capacitor/share` (喚起原生分享選單)。
+*   **分享取消處理 (Graceful Share Cancellation)**：原生分享外掛在使用者主動取消分享時會拋出例外（例如 `Share canceled`）。寫入成功後若因分享取消而進入 `catch`，不應觸發剪貼簿備份或彈出「請確認 App 權限」之誤導性警告。
+*   **Kotlin 與依賴版本管理 (Kotlin Dependencies)**：**禁止**在 `android/build.gradle` 中強制鎖定（force）舊版 Kotlin 標準庫（如 `kotlin-stdlib:1.8.22`），避免與 `@capacitor/filesystem` 等現代原生外掛所需的協程庫發生 `NoClassDefFoundError: Failed resolution of: Lkotlin/coroutines/jvm/internal/SpillingKt;` 衝突。應交由 Gradle 自行解析最高相容版本。
+
+---
+
+## 6. 完整技術手冊 (Full Documentation)
 
 關於更詳細的聽讀特訓機制（盲聽、逐字拼讀高亮）、手滑強制重寫邏輯、CORS WebView 建置原因及各模組詳細依賴關係，請參閱根目錄的：
 *   **技術手冊**：[DEVELOPMENT_GUIDE.md](file:///d:/MyProjects/VocabTool-App/DEVELOPMENT_GUIDE.md)
