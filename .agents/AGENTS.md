@@ -17,18 +17,33 @@
 
 ---
 
-## 2. 開發與打包指令 (Commands)
+## 2. 開發與打包指令與環境變數 (Commands & Environment)
 
-```bash
-# 預編譯打包 JavaScript 模組至 www/index.html
-npm run build
+*   **環境變數設定 (PowerShell 範例)**：
+    ```powershell
+    # 設定 Java 21 JDK 路徑 (使用 Android Studio 內建 JBR)
+    $env:JAVA_HOME="D:\Android\Android Studio\jbr"
+    
+    # 將 ADB 加入 PATH (若尚未設定)
+    $env:Path += ";C:\Users\hys82\AppData\Local\Android\Sdk\platform-tools"
+    ```
 
-# 同步 web 資源至 Android 原生工程
-npx cap sync android
-
-# 編譯 Debug APK (位於 android/ 目錄)
-.\gradlew.bat assembleDebug
-```
+*   **開發指令**：
+    ```powershell
+    # 1. 預編譯打包 JavaScript 模組至 www/index.html
+    cmd /c npm run build
+    
+    # 2. 同步 web 資源至 Android 原生工程
+    cmd /c npx cap sync android
+    
+    # 3. 編譯 Debug APK
+    cd android
+    .\gradlew.bat assembleDebug
+    
+    # 4. 安裝並重啟 App 至連線裝置
+    & "C:\Users\hys82\AppData\Local\Android\Sdk\platform-tools\adb.exe" install -r .\app\build\outputs\apk\debug\app-debug.apk
+    & "C:\Users\hys82\AppData\Local\Android\Sdk\platform-tools\adb.exe" shell am start -n com.vocabtool.app/com.vocabtool.app.MainActivity
+    ```
 
 ---
 
