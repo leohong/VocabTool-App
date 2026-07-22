@@ -1,6 +1,6 @@
 # 🧠 極限單字特訓系統 Mobile App - 產品規格書 (Product Specification)
 
-*   **文件版本 (Document Version)**：1.3.3
+*   **文件版本 (Document Version)**：1.5.0
 *   **適用專案 (Target Project)**：`VocabTool-App` (Capacitor Android + React 18 Mobile Version)
 
 本規格書詳細紀錄「極限單字特訓系統 Mobile App」的系統架構、核心演算法、資料儲存結構、特訓功能模組以及組態規範。
@@ -16,7 +16,10 @@
     *   **React 18**：負責模組化 UI 渲染與狀態管理。
     *   **Tailwind CSS**：負責介面樣式排版（Glassmorphism 玻璃質感、極深色科技暗黑風格）。
     *   **Babel (Standalone)**：瀏覽器端即時轉譯。
-*   **資料持久化與隱私**：完全依賴裝置端 `localStorage` 本地儲存，資料不經過第三方伺服器。
+*   **跨裝置雲端同步 (Cloud Sync)**：
+    *   **Google Drive AppData 同步 (v1.5.0)**：支援 Google Identity Services 帳號授權登入，自動讀寫使用者個人 Google Drive 的專屬 AppData 隱藏區塊（`spaces=appDataFolder`），保護隱私不佔用主目錄。
+    *   **自訂金鑰雲端同步 (v1.4.0)**：支援輸入個人 Sync Key 進行 REST API 雙向同步。
+
 
 ---
 

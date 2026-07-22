@@ -10,6 +10,8 @@
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
 
 
 </head>
@@ -198,6 +200,68 @@
       const [lastSyncTime, setLastSyncTime] = useState(() => localStorage.getItem('vocab_lastSyncTime') || '');
       const [showCloudSyncModal, setShowCloudSyncModal] = useState(false);
       const [cloudInputKey, setCloudInputKey] = useState('');
+      const [gdriveUser, setGdriveUser] = useState(() => localStorage.getItem('vocab_gdrive_email') || null);
+
+      useEffect(() => {
+        if (typeof window !== 'undefined' && window.GoogleDriveSyncEngine) {
+          window.GoogleDriveSyncEngine.init('92837492834-vocabtool.apps.googleusercontent.com', (token, err) => {
+            if (token) {
+              const email = window.GoogleDriveSyncEngine.userEmail;
+              setGdriveUser(email);
+              setCloudSyncStatus('synced');
+            }
+          });
+        }
+      }, []);
+
+      const handleGoogleLogin = () => {
+        if (window.GoogleDriveSyncEngine) {
+          window.GoogleDriveSyncEngine.login();
+        }
+      };
+
+      const handleGoogleSyncUpload = async () => {
+        try {
+          setCloudSyncStatus('syncing');
+          const payload = CloudSyncEngine.buildPayload(dbName, dbList);
+          await window.GoogleDriveSyncEngine.uploadBackup(payload);
+          const formattedTime = new Date().toLocaleString('zh-TW');
+          localStorage.setItem('vocab_lastSyncTime', formattedTime);
+          setLastSyncTime(formattedTime);
+          setCloudSyncStatus('synced');
+          alert('已成功備份至 Google Drive AppData 隱藏空間！');
+        } catch (err) {
+          console.error(err);
+          setCloudSyncStatus('offline');
+          alert('備份至 Google Drive 失敗：' + err.message);
+        }
+      };
+
+      const handleGoogleSyncDownload = async () => {
+        try {
+          setCloudSyncStatus('syncing');
+          const cloudPayload = await window.GoogleDriveSyncEngine.downloadBackup();
+          if (cloudPayload && cloudPayload.databases) {
+            CloudSyncEngine.applyPayloadToLocal(cloudPayload);
+            const formattedTime = new Date(cloudPayload.timestamp || Date.now()).toLocaleString('zh-TW');
+            setLastSyncTime(formattedTime);
+            setCloudSyncStatus('synced');
+            const reloadedState = localStorage.getItem(`vocab_state_${dbName}`);
+            if (reloadedState) setState(JSON.parse(reloadedState));
+            const reloadedVocab = localStorage.getItem(`vocab_customVocab_${dbName}`);
+            if (reloadedVocab) setVocabList(JSON.parse(reloadedVocab));
+            alert('已成功從 Google Drive 下載並還原最新學習進度！');
+          } else {
+            alert('Google Drive 中尚未找到備份檔案。');
+            setCloudSyncStatus('synced');
+          }
+        } catch (err) {
+          console.error(err);
+          setCloudSyncStatus('offline');
+          alert('從 Google Drive 下載失敗：' + err.message);
+        }
+      };
+
 
 
       // ----------------------------------------
@@ -3326,16 +3390,65 @@
                       ☁️ 跨裝置雲端同步設定
                     </h3>
                     <p className="text-xs text-slate-400 mt-1">
-                      設定個人同步金鑰後，您的手機與電腦將自動雙向即時同步學習進度。
+                      支援 Google 帳號授權同步 (Google Drive AppData) 或自訂同步金鑰。
                     </p>
                   </div>
                   <button onClick={() => setShowCloudSyncModal(false)} className="p-2 text-slate-400 hover:text-slate-200 bg-slate-700 rounded-full">✕</button>
                 </div>
 
                 <div className="p-6 space-y-4">
+                  {/* --- 🔵 方案一：Google 帳號一鍵同步 --- */}
+                  <div className="bg-gradient-to-r from-blue-950/40 to-indigo-950/40 p-4 rounded-2xl border border-blue-800/40 space-y-3">
+                    <span className="text-xs font-bold text-blue-300 block">
+                      🔵 方案一：Google 帳號授權同步 (推薦)
+                    </span>
+                    
+                    {gdriveUser ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs bg-blue-900/40 p-2.5 rounded-xl border border-blue-700/50">
+                          <span className="text-slate-300">已連線 Google 帳號：</span>
+                          <span className="font-bold text-blue-300 font-mono truncate max-w-[180px]">{gdriveUser}</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={handleGoogleSyncDownload}
+                            className="py-2 bg-blue-700 hover:bg-blue-600 text-white rounded-xl text-xs font-bold transition-colors shadow-sm"
+                          >
+                            ⬇️ 從 Google Drive 下載
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleGoogleSyncUpload}
+                            className="py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-colors shadow-sm"
+                          >
+                            ⬆️ 備份至 Google Drive
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <button
+                          type="button"
+                          onClick={handleGoogleLogin}
+                          className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2"
+                        >
+                          <svg className="w-4 h-4" viewBox="0 0 24 24"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                          使用 Google 帳號登入並同步
+                        </button>
+                        <p className="text-[10px] text-blue-300/70 mt-1.5 text-center">
+                          🔒 備份檔將儲存於個人 Google Drive 專屬 AppData 隱藏區，保護隱私不佔用主目錄空間。
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="h-px bg-slate-700/50 my-1"></div>
+
+                  {/* --- 🔑 方案二：自訂同步金鑰 --- */}
                   <div>
                     <label className="text-xs font-bold text-slate-300 block mb-1.5">
-                      🔑 個人雲端同步金鑰 (Sync Key)：
+                      🔑 方案二：個人自訂同步金鑰 (Sync Key)：
                     </label>
                     <div className="flex gap-2">
                       <input
@@ -3356,12 +3469,9 @@
                         🎲 隨機金鑰
                       </button>
                     </div>
-                    <p className="text-[11px] text-slate-500 mt-1.5">
-                      💡 只要在其他手機/電腦的 App 中填入完全相同的金鑰，即可同步同一個單字庫與學習數據。
-                    </p>
                   </div>
 
-                  <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-700/60 space-y-2 text-xs">
+                  <div className="bg-slate-900/60 p-3.5 rounded-2xl border border-slate-700/60 space-y-1.5 text-xs">
                     <div className="flex justify-between items-center text-slate-400">
                       <span>當前連線狀態：</span>
                       <span className={`font-bold ${
@@ -3369,9 +3479,9 @@
                         cloudSyncStatus === 'syncing' ? 'text-indigo-400 animate-pulse' :
                         cloudSyncStatus === 'offline' ? 'text-rose-400' : 'text-slate-500'
                       }`}>
-                        {cloudSyncStatus === 'synced' ? '🟢 雲端已連線 (已同步)' :
-                         cloudSyncStatus === 'syncing' ? '🔄 雲端傳輸中...' :
-                         cloudSyncStatus === 'offline' ? '🔴 離線 / 網路不穩定' : '⚪ 未設定同步金鑰'}
+                        {cloudSyncStatus === 'synced' ? '🟢 雲端已同步' :
+                         cloudSyncStatus === 'syncing' ? '🔄 傳輸中...' :
+                         cloudSyncStatus === 'offline' ? '🔴 離線 / 網路問題' : '⚪ 未設定同步'}
                       </span>
                     </div>
                     <div className="flex justify-between items-center text-slate-400">
@@ -3380,7 +3490,7 @@
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 pt-2">
+                  <div className="grid grid-cols-2 gap-3 pt-1">
                     <button
                       type="button"
                       onClick={async () => {
@@ -3401,7 +3511,7 @@
                       }}
                       className="py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-colors shadow-md col-span-2"
                     >
-                      💾 儲存金鑰並立刻雙向同步
+                      💾 儲存金鑰並雙向同步
                     </button>
                     <button
                       type="button"
@@ -3412,7 +3522,7 @@
                       disabled={!cloudSyncKey}
                       className="py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-40 text-indigo-300 rounded-xl text-xs font-bold transition-colors"
                     >
-                      ⬇️ 強制從雲端下載
+                      ⬇️ 從金鑰雲端下載
                     </button>
                     <button
                       type="button"
@@ -3423,13 +3533,14 @@
                       disabled={!cloudSyncKey}
                       className="py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-40 text-emerald-300 rounded-xl text-xs font-bold transition-colors"
                     >
-                      ⬆️ 強制推送至雲端
+                      ⬆️ 推送至金鑰雲端
                     </button>
                   </div>
                 </div>
               </div>
             </div>
           )}
+
 
         </div>
       );
