@@ -3221,6 +3221,24 @@
             </div>
           )}
 
+          {/* --- ☁️ 雲端同步設定 Modal --- */}
+          <CloudSyncModal
+            showCloudSyncModal={showCloudSyncModal}
+            setShowCloudSyncModal={setShowCloudSyncModal}
+            cloudInputKey={cloudInputKey}
+            setCloudInputKey={setCloudInputKey}
+            cloudSyncStatus={cloudSyncStatus}
+            lastSyncTime={lastSyncTime}
+            cloudSyncKey={cloudSyncKey}
+            setCloudSyncKey={setCloudSyncKey}
+            performCloudPull={performCloudPull}
+            performCloudPush={performCloudPush}
+            gdriveUser={gdriveUser}
+            handleGoogleLogin={handleGoogleLogin}
+            handleGoogleSyncUpload={handleGoogleSyncUpload}
+            handleGoogleSyncDownload={handleGoogleSyncDownload}
+          />
+
         </div>
       );
     }

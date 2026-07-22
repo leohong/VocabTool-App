@@ -8,6 +8,7 @@ const files = [
   'www/js/GoogleDriveSyncEngine.js',
   'www/js/hooks/useVocabState.js',
   'www/js/hooks/useCloudSync.js',
+  'www/js/components/CloudSyncModal.js',
   'www/js/app.js'
 ];
 
