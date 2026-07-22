@@ -1,0 +1,3 @@
+- `[x]` Install `VocabTool-v1.0.apk` on `emulator-5554`
+- `[x]` Launch the application
+- `[x]` Verify application is running
