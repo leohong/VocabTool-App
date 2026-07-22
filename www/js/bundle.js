@@ -1,28 +1,5 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>極限單字特訓系統</title>
-
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-</head>
-
-<body class="bg-slate-900 text-slate-100 font-sans p-4 md:p-8 flex justify-center min-h-screen overscroll-none selection:bg-indigo-900 selection:text-indigo-200">
-
-  <div id="root" class="w-full max-w-2xl flex flex-col"></div>
-
-  <!-- 模組化編譯輸出 (Generated from www/js/ modules) -->
-  <script type="text/babel">
-
-    // ==========================================
-    // --- File: www/js/data/vocabData.js ---
-    // ==========================================
+// --- File: www/js/data/vocabData.js ---
 // ==========================================
 // --- 📚 單字資料庫預設資料與遮罩常數 ---
 // ==========================================
@@ -72,9 +49,7 @@ window.maskSentenceText = (eg, word) => {
 };
 
 
-    // ==========================================
-    // --- File: www/js/CloudSyncEngine.js ---
-    // ==========================================
+// --- File: www/js/CloudSyncEngine.js ---
 // ==========================================
 // --- ☁️ 雲端同步模組 (Cloud Sync Engine) ---
 // ==========================================
@@ -174,9 +149,7 @@ window.CloudSyncEngine = {
 };
 
 
-    // ==========================================
-    // --- File: www/js/GoogleDriveSyncEngine.js ---
-    // ==========================================
+// --- File: www/js/GoogleDriveSyncEngine.js ---
 // ==========================================
 // --- 🔵 Google Drive AppData 同步引擎 ---
 // ==========================================
@@ -320,9 +293,7 @@ window.GoogleDriveSyncEngine = {
 };
 
 
-    // ==========================================
-    // --- File: www/js/components/Icons.js ---
-    // ==========================================
+// --- File: www/js/components/Icons.js ---
 // ==========================================
 // --- SVG 圖示元件 (SVG Icons) ---
 // ==========================================
@@ -334,9 +305,7 @@ window.IconAlert = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" heig
 window.IconVolume = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>;
 
 
-    // ==========================================
-    // --- File: www/js/components/Header.js ---
-    // ==========================================
+// --- File: www/js/components/Header.js ---
 // ==========================================
 // --- 頂部導覽與狀態列 (Header Component) ---
 // ==========================================
@@ -425,9 +394,7 @@ window.Header = ({
 };
 
 
-    // ==========================================
-    // --- File: www/js/components/Dashboard.js ---
-    // ==========================================
+// --- File: www/js/components/Dashboard.js ---
 // ==========================================
 // --- 🏠 主控制台 Dashboard 元件 ---
 // ==========================================
@@ -647,9 +614,7 @@ window.Dashboard = ({
 };
 
 
-    // ==========================================
-    // --- File: www/js/components/Sessions.js ---
-    // ==========================================
+// --- File: www/js/components/Sessions.js ---
 // ==========================================
 // --- ⚡ 特訓模組 Sessions 元件 ---
 // ==========================================
@@ -852,9 +817,7 @@ window.SessionComplete = ({ returnToDashboard }) => {
 };
 
 
-    // ==========================================
-    // --- File: www/js/components/AudioPlayer.js ---
-    // ==========================================
+// --- File: www/js/components/AudioPlayer.js ---
 // ==========================================
 // --- 🎧 聽音特訓播放器 AudioPlayer 元件 ---
 // ==========================================
@@ -922,9 +885,7 @@ window.AudioPlayer = ({
 };
 
 
-    // ==========================================
-    // --- File: www/js/components/Modals.js ---
-    // ==========================================
+// --- File: www/js/components/Modals.js ---
 // ==========================================
 // --- 🪟 各類彈窗 Modals 元件庫 ---
 // ==========================================
@@ -1142,9 +1103,7 @@ window.AllVocabModal = ({
 };
 
 
-    // ==========================================
-    // --- File: www/js/components/CloudSyncModal.js ---
-    // ==========================================
+// --- File: www/js/components/CloudSyncModal.js ---
 // ==========================================
 // --- ☁️ 雲端同步設定 Modal (含 Google Drive 同步) ---
 // ==========================================
@@ -1328,9 +1287,7 @@ window.CloudSyncModal = ({
 };
 
 
-    // ==========================================
-    // --- File: www/js/app.js ---
-    // ==========================================
+// --- File: www/js/app.js ---
 // ==========================================
 // --- 🚀 主應用程式進入點 (App Core Component) ---
 // ==========================================
@@ -1714,22 +1671,3 @@ function App() {
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);
 
-
-  </script>
-
-  <style>
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-  </style>
-</body>
-
-</html>
