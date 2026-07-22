@@ -36,7 +36,7 @@ window.Header = ({
         </div>
 
         {/* 打卡天數 */}
-        {streak.count > 0 && (
+        {streak && streak.count > 0 && (
           <div className="bg-orange-950/30 border border-orange-500/40 px-2 py-1 rounded-md flex items-center gap-1.5 shadow-sm shrink-0">
             <span className="text-[10px]">🔥</span>
             <span className="font-bold text-orange-400 text-xs tracking-wide">{streak.count} 天</span>
@@ -47,7 +47,7 @@ window.Header = ({
         <button
           type="button"
           onClick={() => {
-            setCloudInputKey(cloudSyncKey);
+            setCloudInputKey(cloudSyncKey || '');
             setShowCloudSyncModal(true);
           }}
           className={`border px-2 py-1 rounded-md flex items-center gap-1.5 transition-all shadow-sm shrink-0 hover:brightness-110 select-none ${

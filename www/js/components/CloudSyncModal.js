@@ -35,7 +35,7 @@ window.CloudSyncModal = ({
         </div>
 
         <div className="p-6 space-y-4">
-          {/* --- 🔵 方案一：Google 帳號一鍵同步 --- */}
+          {/* --- 🔑 方案一：Google 帳號一鍵同步 --- */}
           <div className="bg-gradient-to-r from-blue-950/40 to-indigo-950/40 p-4 rounded-2xl border border-blue-800/40 space-y-3">
             <span className="text-xs font-bold text-blue-300 block">
               🔵 方案一：Google 帳號授權同步 (推薦)

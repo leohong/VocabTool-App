@@ -8,7 +8,13 @@ const files = [
   'www/js/GoogleDriveSyncEngine.js',
   'www/js/hooks/useVocabState.js',
   'www/js/hooks/useCloudSync.js',
+  'www/js/components/Icons.js',
+  'www/js/components/Header.js',
+  'www/js/components/Dashboard.js',
+  'www/js/components/Sessions.js',
+  'www/js/components/AudioPlayer.js',
   'www/js/components/CloudSyncModal.js',
+  'www/js/components/Modals.js',
   'www/js/app.js'
 ];
 
@@ -34,7 +40,6 @@ const htmlTemplate = `<!DOCTYPE html>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 
 <body class="bg-slate-900 text-slate-100 font-sans p-4 md:p-8 flex justify-center min-h-screen overscroll-none selection:bg-indigo-900 selection:text-indigo-200">

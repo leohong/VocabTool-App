@@ -7,6 +7,7 @@
     "build": "node scripts/build.js"
   },
   "dependencies": {
+    "@capacitor-community/text-to-speech": "^8.0.2",
     "@capacitor/android": "^8.4.2",
     "@capacitor/cli": "^7.6.8",
     "@capacitor/core": "^8.4.2"

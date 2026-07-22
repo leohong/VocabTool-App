@@ -116,3 +116,30 @@ $$\text{連續拼對目標次數} = \text{Min}(\text{該字錯誤次數} \times 
 *   **原生 Android 命令**：
     *   同步網頁靜態資源：`npx cap sync android`
     *   開啟 Android Studio：`npx cap open android`
+
+---
+
+## 7. 程式碼模組化結構與建置程序 (Modular Structure & Build Process)
+
+本專案自 v1.5.0 起，將原先巨大（逾 3300 行）的單一腳本 `app.js` 拆分成高可讀性、職責分明的模組結構：
+
+### 7.1 目錄與依賴關係
+1.  **`utils/` (無狀態演算法)**：
+    -   `textUtils.js`：文字清洗與遮罩處理 (`cleanApostrophe`, `maskText`, `maskExample`)。
+    -   `dictionaryApi.js`：線上字典 API fetch 與 MyMemory 並行翻譯 (`fetchDictionaryData`)。
+2.  **`engines/` (傳輸層)**：
+    -   `CloudSyncEngine.js`：RESTful 雲端傳輸協議。
+    -   `GoogleDriveSyncEngine.js`：Google 隱私區 AppData 備份寫入。
+3.  **`hooks/` (React 業務狀態與生命週期)**：
+    -   `useVocabState.js`：單字字典儲存、天數切換與自動儲存。
+    -   `useCloudSync.js`：OAuth2 認證狀態與備份還原調度。
+4.  **`components/` (視覺元件，純 JSX)**：
+    -   `Icons.js`：全域 SVG 元件。
+    -   `Header.js`、`Dashboard.js`、`Sessions.js`、`AudioPlayer.js`、`CloudSyncModal.js`、`Modals.js`。
+5.  **`app.js` (進入點與視圖分派)**：
+    -   使用上述 Custom Hooks，並依據 `view` 狀態決定分派渲染哪一個元件。
+
+### 7.2 預編譯打包機制 (`scripts/build.js`)
+*   **原因**：Android 原生 WebView 因安全性原則不支援 AJAX 本地 JSX/JS 跨檔讀取。
+*   **作法**：透過建置腳本將 14 個模組依賴順序（Utilities ➔ Engines ➔ Hooks ➔ Components ➔ Entrypoint）進行合併，以 Babel Standalone 形式直接寫入發布用 `www/index.html` 中的單一 `<script>` 標籤中。
+

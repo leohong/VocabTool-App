@@ -38,3 +38,11 @@ npx cap sync android
 1. **🔒 Git Push 限制**：**未經使用者明確口頭同意，絕不自動執行 `git push`！**
 2. **🎨 UI 0 變化原則**：進行重構時，務必確保原本的 Tailwind CSS 樣式、動畫、按鈕顏色與排版 100% 零偏離。
 3. **☁️ 雲端同步能力 (v1.5.0)**：支援 Google Identity Services 帳號授權，備份檔寫入個人 Google Drive 專屬 AppData 隱藏區（`spaces=appDataFolder`）。
+
+---
+
+## 4. 完整技術手冊 (Full Documentation)
+
+關於更詳細的聽讀特訓機制（盲聽、逐字拼讀高亮）、手滑強制重寫邏輯、CORS WebView 建置原因及各模組詳細依賴關係，請參閱根目錄的：
+*   **技術手冊**：[DEVELOPMENT_GUIDE.md](file:///d:/MyProjects/VocabTool-App/DEVELOPMENT_GUIDE.md)
+
