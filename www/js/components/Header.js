@@ -36,7 +36,7 @@ window.Header = ({
         <div className={`border px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md flex items-center gap-1 transition-colors shadow-sm shrink-0 ${indicator.bg} ${indicator.border}`}>
           <span className="text-[10px]">{indicator.icon}</span>
           <span className={`font-bold text-[11px] sm:text-xs tracking-wide ${indicator.color}`}>{indicator.title}</span>
-          <span className={`text-[10px] sm:text-[11px] font-mono ml-0.5 pl-1 border-l opacity-80 ${indicator.border}`}>負債: {mistakesTotal}</span>
+          <span className={`text-[10px] sm:text-[11px] font-mono ml-0.5 pl-1 border-l opacity-80 ${indicator.border}`}>-{mistakesTotal}</span>
         </div>
 
         {/* 打卡天數 */}
@@ -48,8 +48,7 @@ window.Header = ({
         )}
 
         {/* 進度選單 */}
-        <div className="flex items-center gap-1 text-[11px] sm:text-xs text-slate-400 font-medium shrink-0 whitespace-nowrap">
-          進度:
+        <div className="flex items-center text-[11px] sm:text-xs text-slate-400 font-medium shrink-0 whitespace-nowrap">
           <select
             value={currentDay}
             onChange={(e) => setCurrentDay(parseInt(e.target.value, 10))}
