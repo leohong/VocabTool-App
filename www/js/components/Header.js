@@ -30,8 +30,8 @@ window.Header = ({
         </a>
       </div>
 
-      {/* 狀態、打卡、進度選單與說明書 (手機橫向 / 平板 / 電腦 100% 單行平均佈局) */}
-      <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-1.5 sm:gap-2.5 flex-wrap sm:flex-nowrap">
+      {/* 狀態、打卡、進度選單與說明書 (手機直向 2 行平鋪 / 橫向與電腦 1 行平鋪) */}
+      <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-1 sm:gap-2.5 flex-nowrap overflow-x-auto no-scrollbar">
         {/* 狀態燈號 */}
         <div className={`border px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md flex items-center gap-1 transition-colors shadow-sm shrink-0 ${indicator.bg} ${indicator.border}`}>
           <span className="text-[10px]">{indicator.icon}</span>
