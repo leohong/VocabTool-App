@@ -12,6 +12,15 @@ const files = [
   'www/js/components/Sessions.js',
   'www/js/components/AudioPlayer.js',
   'www/js/components/Modals.js',
+  'www/js/components/modals/AudioSetupModal.js',
+  'www/js/components/modals/PreviewModal.js',
+  'www/js/components/modals/MistakeModal.js',
+  'www/js/components/modals/HistoryModal.js',
+  'www/js/components/modals/DictModal.js',
+  'www/js/components/modals/AllPreviewModal.js',
+  'www/js/components/modals/EditWordModal.js',
+  'www/js/components/modals/ImportOptionsModal.js',
+  'www/js/components/modals/LicensesModal.js',
   'www/js/app.js'
 ];
 

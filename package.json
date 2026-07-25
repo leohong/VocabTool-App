@@ -5,6 +5,8 @@
   "private": true,
   "scripts": {
     "build": "node scripts/build.js",
+    "deploy": "node scripts/dev_deploy.js",
+    "test:all": "python scripts/run_all_tests.py",
     "serve": "start python -m http.server 8001 --directory www"
   },
   "dependencies": {
