@@ -161,27 +161,27 @@ window.Dashboard = ({
             + 新增
           </button>
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex justify-between items-center gap-2">
-            <span className="text-xs font-bold text-slate-400">🎯 每日新字:</span>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="flex justify-between items-center gap-1">
+            <span className="text-xs font-bold text-slate-400 flex-shrink-0">🎯 每日新字:</span>
             <input
               type="number"
               min="1"
               max="500"
               value={wordsPerDay}
               onChange={(e) => setWordsPerDay(Math.max(1, parseInt(e.target.value, 10) || 1))}
-              className="w-16 bg-slate-900 border border-slate-700 rounded-md py-1 px-1 text-xs text-center focus:outline-none focus:border-indigo-500 font-mono"
+              className="w-12 bg-slate-900 border border-slate-700 rounded-md py-1 px-1 text-xs text-center focus:outline-none focus:border-indigo-500 font-mono flex-shrink-0"
             />
           </div>
-          <div className="flex justify-between items-center gap-2 border-l border-slate-700 pl-4">
-            <span className="text-xs font-bold text-slate-400">👻 每日幽靈:</span>
+          <div className="flex justify-between items-center gap-1 border-l border-slate-700 pl-2">
+            <span className="text-xs font-bold text-slate-400 flex-shrink-0">👻 每日幽靈:</span>
             <input
               type="number"
               min="0"
               max="100"
               value={ghostsPerDay}
               onChange={(e) => setGhostsPerDay(Math.max(0, parseInt(e.target.value, 10) || 0))}
-              className="w-16 bg-slate-900 border border-slate-700 rounded-md py-1 px-1 text-xs text-center focus:outline-none focus:border-indigo-500 font-mono text-amber-300"
+              className="w-12 bg-slate-900 border border-slate-700 rounded-md py-1 px-1 text-xs text-center focus:outline-none focus:border-indigo-500 font-mono text-amber-300 flex-shrink-0"
             />
           </div>
         </div>

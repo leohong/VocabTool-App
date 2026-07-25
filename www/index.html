@@ -495,27 +495,27 @@ window.Dashboard = ({
             + 新增
           </button>
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex justify-between items-center gap-2">
-            <span className="text-xs font-bold text-slate-400">🎯 每日新字:</span>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="flex justify-between items-center gap-1">
+            <span className="text-xs font-bold text-slate-400 flex-shrink-0">🎯 每日新字:</span>
             <input
               type="number"
               min="1"
               max="500"
               value={wordsPerDay}
               onChange={(e) => setWordsPerDay(Math.max(1, parseInt(e.target.value, 10) || 1))}
-              className="w-16 bg-slate-900 border border-slate-700 rounded-md py-1 px-1 text-xs text-center focus:outline-none focus:border-indigo-500 font-mono"
+              className="w-12 bg-slate-900 border border-slate-700 rounded-md py-1 px-1 text-xs text-center focus:outline-none focus:border-indigo-500 font-mono flex-shrink-0"
             />
           </div>
-          <div className="flex justify-between items-center gap-2 border-l border-slate-700 pl-4">
-            <span className="text-xs font-bold text-slate-400">👻 每日幽靈:</span>
+          <div className="flex justify-between items-center gap-1 border-l border-slate-700 pl-2">
+            <span className="text-xs font-bold text-slate-400 flex-shrink-0">👻 每日幽靈:</span>
             <input
               type="number"
               min="0"
               max="100"
               value={ghostsPerDay}
               onChange={(e) => setGhostsPerDay(Math.max(0, parseInt(e.target.value, 10) || 0))}
-              className="w-16 bg-slate-900 border border-slate-700 rounded-md py-1 px-1 text-xs text-center focus:outline-none focus:border-indigo-500 font-mono text-amber-300"
+              className="w-12 bg-slate-900 border border-slate-700 rounded-md py-1 px-1 text-xs text-center focus:outline-none focus:border-indigo-500 font-mono text-amber-300 flex-shrink-0"
             />
           </div>
         </div>
@@ -725,7 +725,12 @@ window.ScanningSession = ({
           {currentWord._isGhost && <span className="animate-bounce" title="歷史幽靈突襲">👻</span>}
           {currentWord.pos}
         </span>
-        <h2 className="text-5xl md:text-6xl font-black text-slate-100 tracking-tight mb-4">
+        <h2 className={`${
+          currentWord.en.length <= 8 ? 'text-5xl md:text-6xl' :
+          currentWord.en.length <= 12 ? 'text-4xl md:text-5xl' :
+          currentWord.en.length <= 16 ? 'text-3xl md:text-4xl' :
+          currentWord.en.length <= 20 ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl break-all'
+        } font-black text-slate-100 tracking-tight mb-4`}>
           {currentWord.en}
         </h2>
         <p className="text-2xl text-slate-300 mb-2">{currentWord.zh}</p>
@@ -837,7 +842,10 @@ window.SpellingSession = ({
         <h2 className="text-3xl md:text-4xl font-black text-slate-100 tracking-tight mb-2">
           {currentWord.zh}
         </h2>
-        <div className="text-sm font-mono tracking-widest text-slate-500 mt-2 mb-4">
+        <div className={`${
+          currentWord.en.length <= 10 ? 'text-sm' :
+          currentWord.en.length <= 15 ? 'text-xs' : 'text-[10px]'
+        } font-mono tracking-widest text-slate-500 mt-2 mb-4`}>
           {currentWord.en.length} 字母 ( {Array(currentWord.en.length).fill('_').join(' ')} )
         </div>
         {currentWord.eg && (
@@ -864,7 +872,11 @@ window.SpellingSession = ({
           {mustTypeCorrectly && (
             <div className="bg-slate-900 p-4 rounded-xl border border-emerald-900/50 mb-2">
               <span className="text-xs text-slate-500 block mb-1">神經鏈結斷裂，請看著答案親手輸入一次：</span>
-              <span className="text-3xl font-black font-mono text-emerald-400 tracking-widest select-none">
+              <span className={`${
+                currentWord.en.length <= 8 ? 'text-3xl' :
+                currentWord.en.length <= 12 ? 'text-2xl' :
+                currentWord.en.length <= 16 ? 'text-xl' : 'text-lg break-all'
+              } font-black font-mono text-emerald-400 tracking-widest select-none`}>
                 {currentWord.en}
               </span>
             </div>
@@ -882,7 +894,11 @@ window.SpellingSession = ({
             spellCheck="false"
             onFocus={() => setIsInputFocused(true)}
             onBlur={() => setTimeout(() => setIsInputFocused(false), 150)}
-            className={`w-full py-4 px-6 bg-slate-900 border-2 rounded-xl text-xl font-bold font-mono text-center transition-colors tracking-widest focus:outline-none ${
+            className={`w-full py-4 px-6 bg-slate-900 border-2 rounded-xl ${
+              currentWord.en.length <= 8 ? 'text-xl' :
+              currentWord.en.length <= 12 ? 'text-lg' :
+              currentWord.en.length <= 16 ? 'text-base' : 'text-sm'
+            } font-bold font-mono text-center transition-colors tracking-widest focus:outline-none ${
               typoCount === 1
                 ? 'border-amber-500/50 text-amber-300'
                 : mustTypeCorrectly
@@ -1047,7 +1063,10 @@ window.AudioPlayer = ({
           </span>
 
           {/* 單字拼寫與高亮展示 */}
-          <div className="min-h-[80px] flex items-center justify-center flex-wrap gap-1.5 mb-4 select-none">
+          <div className={`min-h-[80px] flex items-center justify-center flex-wrap ${
+            (currentWord?.en || '').length <= 10 ? 'gap-1.5' :
+            (currentWord?.en || '').length <= 15 ? 'gap-1' : 'gap-0.5'
+          } mb-4 select-none`}>
             {(() => {
               const wordEn = currentWord?.en || '';
               const spellingIndices = [];
@@ -1085,7 +1104,14 @@ window.AudioPlayer = ({
                 }
 
                 // 決定樣式類別
-                let charClass = "text-4xl sm:text-5xl font-black font-mono transition-all duration-150 ";
+                const len = wordEn.length;
+                let baseSizeClass = "text-4xl sm:text-5xl";
+                if (len > 8 && len <= 12) baseSizeClass = "text-3xl sm:text-4xl";
+                else if (len > 12 && len <= 16) baseSizeClass = "text-2xl sm:text-3xl";
+                else if (len > 16 && len <= 20) baseSizeClass = "text-xl sm:text-2xl";
+                else if (len > 20) baseSizeClass = "text-lg sm:text-xl";
+
+                let charClass = `${baseSizeClass} font-black font-mono transition-all duration-150 `;
                 if (audioSubStep === 'spelling') {
                   if (isActive) {
                     charClass += "text-indigo-400 scale-125 drop-shadow-[0_0_10px_rgba(129,140,248,0.8)]";
@@ -2470,7 +2496,7 @@ function App() {
   // ----------------------------------------
   // --- 0. 版本管理常數 (三碼版本號規則) ---
   // ----------------------------------------
-  const APP_VERSION = "1.6.1";
+  const APP_VERSION = "1.6.2";
   const DISPLAY_VERSION = APP_VERSION.split('.').slice(0, 2).join('.');
 
   // ----------------------------------------

@@ -76,7 +76,10 @@ window.AudioPlayer = ({
           </span>
 
           {/* 單字拼寫與高亮展示 */}
-          <div className="min-h-[80px] flex items-center justify-center flex-wrap gap-1.5 mb-4 select-none">
+          <div className={`min-h-[80px] flex items-center justify-center flex-wrap ${
+            (currentWord?.en || '').length <= 10 ? 'gap-1.5' :
+            (currentWord?.en || '').length <= 15 ? 'gap-1' : 'gap-0.5'
+          } mb-4 select-none`}>
             {(() => {
               const wordEn = currentWord?.en || '';
               const spellingIndices = [];
@@ -114,7 +117,14 @@ window.AudioPlayer = ({
                 }
 
                 // 決定樣式類別
-                let charClass = "text-4xl sm:text-5xl font-black font-mono transition-all duration-150 ";
+                const len = wordEn.length;
+                let baseSizeClass = "text-4xl sm:text-5xl";
+                if (len > 8 && len <= 12) baseSizeClass = "text-3xl sm:text-4xl";
+                else if (len > 12 && len <= 16) baseSizeClass = "text-2xl sm:text-3xl";
+                else if (len > 16 && len <= 20) baseSizeClass = "text-xl sm:text-2xl";
+                else if (len > 20) baseSizeClass = "text-lg sm:text-xl";
+
+                let charClass = `${baseSizeClass} font-black font-mono transition-all duration-150 `;
                 if (audioSubStep === 'spelling') {
                   if (isActive) {
                     charClass += "text-indigo-400 scale-125 drop-shadow-[0_0_10px_rgba(129,140,248,0.8)]";

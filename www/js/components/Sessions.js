@@ -82,7 +82,12 @@ window.ScanningSession = ({
           {currentWord._isGhost && <span className="animate-bounce" title="歷史幽靈突襲">👻</span>}
           {currentWord.pos}
         </span>
-        <h2 className="text-5xl md:text-6xl font-black text-slate-100 tracking-tight mb-4">
+        <h2 className={`${
+          currentWord.en.length <= 8 ? 'text-5xl md:text-6xl' :
+          currentWord.en.length <= 12 ? 'text-4xl md:text-5xl' :
+          currentWord.en.length <= 16 ? 'text-3xl md:text-4xl' :
+          currentWord.en.length <= 20 ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl break-all'
+        } font-black text-slate-100 tracking-tight mb-4`}>
           {currentWord.en}
         </h2>
         <p className="text-2xl text-slate-300 mb-2">{currentWord.zh}</p>
@@ -194,7 +199,10 @@ window.SpellingSession = ({
         <h2 className="text-3xl md:text-4xl font-black text-slate-100 tracking-tight mb-2">
           {currentWord.zh}
         </h2>
-        <div className="text-sm font-mono tracking-widest text-slate-500 mt-2 mb-4">
+        <div className={`${
+          currentWord.en.length <= 10 ? 'text-sm' :
+          currentWord.en.length <= 15 ? 'text-xs' : 'text-[10px]'
+        } font-mono tracking-widest text-slate-500 mt-2 mb-4`}>
           {currentWord.en.length} 字母 ( {Array(currentWord.en.length).fill('_').join(' ')} )
         </div>
         {currentWord.eg && (
@@ -221,7 +229,11 @@ window.SpellingSession = ({
           {mustTypeCorrectly && (
             <div className="bg-slate-900 p-4 rounded-xl border border-emerald-900/50 mb-2">
               <span className="text-xs text-slate-500 block mb-1">神經鏈結斷裂，請看著答案親手輸入一次：</span>
-              <span className="text-3xl font-black font-mono text-emerald-400 tracking-widest select-none">
+              <span className={`${
+                currentWord.en.length <= 8 ? 'text-3xl' :
+                currentWord.en.length <= 12 ? 'text-2xl' :
+                currentWord.en.length <= 16 ? 'text-xl' : 'text-lg break-all'
+              } font-black font-mono text-emerald-400 tracking-widest select-none`}>
                 {currentWord.en}
               </span>
             </div>
@@ -239,7 +251,11 @@ window.SpellingSession = ({
             spellCheck="false"
             onFocus={() => setIsInputFocused(true)}
             onBlur={() => setTimeout(() => setIsInputFocused(false), 150)}
-            className={`w-full py-4 px-6 bg-slate-900 border-2 rounded-xl text-xl font-bold font-mono text-center transition-colors tracking-widest focus:outline-none ${
+            className={`w-full py-4 px-6 bg-slate-900 border-2 rounded-xl ${
+              currentWord.en.length <= 8 ? 'text-xl' :
+              currentWord.en.length <= 12 ? 'text-lg' :
+              currentWord.en.length <= 16 ? 'text-base' : 'text-sm'
+            } font-bold font-mono text-center transition-colors tracking-widest focus:outline-none ${
               typoCount === 1
                 ? 'border-amber-500/50 text-amber-300'
                 : mustTypeCorrectly
