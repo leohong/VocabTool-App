@@ -1,5 +1,10 @@
 {
   "appId": "com.vocabtool.app",
   "appName": "極限單字特訓",
-  "webDir": "www"
+  "webDir": "www",
+  "plugins": {
+    "CapacitorUpdater": {
+      "autoUpdate": false
+    }
+  }
 }

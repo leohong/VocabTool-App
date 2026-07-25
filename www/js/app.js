@@ -120,10 +120,70 @@ function App() {
   const inputRef = useRef(null);
 
   const [appLoaded, setAppLoaded] = useState(false);
+  const [otaUpdating, setOtaUpdating] = useState(false);
+
+  const getUpdaterPlugin = () => {
+    if (typeof window !== 'undefined' && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.CapacitorUpdater) {
+      return window.Capacitor.Plugins.CapacitorUpdater;
+    }
+    return null;
+  };
+
+  const triggerOtaCheck = async (updater) => {
+    try {
+      const UPDATE_CONFIG_URL = 'https://raw.githubusercontent.com/leohong/VocabTool-App/main/update.json';
+      const response = await fetch(UPDATE_CONFIG_URL, { cache: 'no-store' });
+      if (!response.ok) return;
+      const remoteConfig = await response.json();
+
+      if (remoteConfig.version && remoteConfig.url) {
+        const isNewer = (remoteVer, localVer) => {
+          const parse = (v) => v.split('.').map(n => parseInt(n, 10) || 0);
+          const [rMajor, rMinor, rPatch] = parse(remoteVer);
+          const [lMajor, lMinor, lPatch] = parse(localVer);
+          if (rMajor !== lMajor) return rMajor > lMajor;
+          if (rMinor !== lMinor) return rMinor > lMinor;
+          return rPatch > lPatch;
+        };
+
+        if (isNewer(remoteConfig.version, APP_VERSION)) {
+          if (window.confirm(`發現新版特訓模組 (v${remoteConfig.version})，是否立即下載更新？\n（更新將重啟 App 生效）`)) {
+            setOtaUpdating(true);
+            try {
+              console.log('[Update] Downloading package:', remoteConfig.url);
+              const downloadResult = await updater.download({
+                url: remoteConfig.url,
+                version: remoteConfig.version
+              });
+              console.log('[Update] Download complete, applying update...');
+              await updater.set(downloadResult);
+            } catch (err) {
+              console.error('[Update] OTA failed:', err);
+              alert(`更新下載失敗：${err.message || err}`);
+              setOtaUpdating(false);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[Update] Update check skipped (offline or network error):', err.message || err);
+    }
+  };
 
   // --- 初始化異步載入所有存檔與偏好設定 ---
   useEffect(() => {
     async function loadConfig() {
+      // 宣告 App 已正常開機就緒（防回退安全機制）
+      const updater = getUpdaterPlugin();
+      if (updater) {
+        try {
+          await updater.notifyAppReady();
+          console.log('[Update] notifyAppReady declared.');
+        } catch (err) {
+          console.error('[Update] notifyAppReady failed:', err);
+        }
+      }
+
       // 1. 初始化資料庫與狀態
       await initAllData();
 
@@ -152,6 +212,13 @@ function App() {
       }
 
       setAppLoaded(true);
+
+      // 背景啟動更新檢查
+      if (updater) {
+        setTimeout(() => {
+          triggerOtaCheck(updater);
+        }, 3000);
+      }
     }
     loadConfig();
   }, []);
@@ -159,7 +226,7 @@ function App() {
   // --- 系統同步與續傳 ---
   useEffect(() => {
     if (!isStorageLoaded) return;
-    
+
     async function checkTempSession() {
       const tempSession = await window.persistentStorage.getSetting(`vocab_tempSession_${dbName}`, null);
       if (tempSession) {
@@ -195,7 +262,7 @@ function App() {
   // 自動暫存
   useEffect(() => {
     if (!isStorageLoaded) return;
-    
+
     async function handleTempSession() {
       if (view !== 'dashboard' && view !== 'summary') {
         const sessionData = { queue, currentSessionWords, sessionType, view, date: new Date().toDateString() };
@@ -335,7 +402,7 @@ function App() {
         console.log('TTS speakAsync using native Capacitor plugin');
         try {
           await tts.stop();
-          
+
           const onAbort = () => {
             tts.stop();
             resolve();
@@ -350,7 +417,7 @@ function App() {
             volume: (audioSettings.volume ?? 80) / 100,
             category: 'ambient'
           });
-          
+
           if (signal) signal.removeEventListener('abort', onAbort);
           console.log('TTS speakAsync native speak completed:', text);
           resolve();
@@ -455,7 +522,7 @@ function App() {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
-    
+
     const tts = getTtsPlugin();
     if (tts) {
       tts.stop().catch(err => console.error('TTS native stop error:', err));
@@ -491,7 +558,7 @@ function App() {
   const runAudioLoop = async (startIndex, queueToPlay, settings, signal) => {
     let idx = startIndex;
     await requestWakeLock();
-    
+
     while (idx < queueToPlay.length && !signal.aborted) {
       setCurrentAudioIndex(idx);
       const word = queueToPlay[idx];
@@ -511,9 +578,9 @@ function App() {
         setAudioSubStep('spelling');
         setAudioStatusText(`拼讀字母...`);
         const chars = word.en.toLowerCase().replace(/[^a-z']/g, '').split('');
-        
+
         let spellingFinished = false;
-        
+
         // Dynamic highlight delay checking if the audio has completed early
         const delayHighlight = (ms) => {
           return new Promise((resolve) => {
@@ -536,7 +603,7 @@ function App() {
           }
           setActiveSpellingChar(-1);
         };
-        
+
         runHighlight();
 
         const spellingStr = chars.join(', ');
@@ -698,7 +765,7 @@ function App() {
       abortControllerRef.current = abortController;
       runAudioLoop(currentAudioIndex, audioQueue, audioSettings, abortController.signal);
     }
-    
+
     return () => {
       if (view !== 'audio_player') {
         if (abortControllerRef.current) {
@@ -992,13 +1059,13 @@ function App() {
   // ----------------------------------------
   const downloadFile = async (filename, content, type) => {
     const isNative = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
-    
+
     if (isNative) {
       let writeSuccess = false;
       try {
         const { Filesystem } = window.Capacitor.Plugins || {};
         const { Share } = window.Capacitor.Plugins || {};
-        
+
         if (Filesystem && Share) {
           // 在原生平台上，先寫入暫存檔案，然後透過 Share 分享/下載
           const result = await Filesystem.writeFile({
@@ -1008,7 +1075,7 @@ function App() {
             encoding: 'utf8'
           });
           writeSuccess = true;
-          
+
           await Share.share({
             title: filename,
             url: result.uri
@@ -1023,7 +1090,7 @@ function App() {
           return;
         }
       }
-      
+
       // 備用方案：只有當檔案寫入失敗時，才嘗試複製到剪貼簿
       try {
         await navigator.clipboard.writeText(content);
@@ -1317,7 +1384,7 @@ function App() {
             const [_, mistakesCount, pos, en, rest] = match;
             const wordKey = en.trim();
             const mCount = parseInt(mistakesCount, 10);
-            
+
             let zh = rest.trim();
             let eg = '';
             if (zh.includes(' || ')) {
@@ -1325,10 +1392,10 @@ function App() {
               zh = parts[0].trim();
               eg = parts[1].trim();
             }
-            
+
             const word = { en: wordKey, pos: pos.trim(), zh };
             if (eg) word.eg = eg;
-            
+
             importedVocab.push(word);
             importedHistory[wordKey] = {
               mistakesCount: mCount,
@@ -1523,7 +1590,7 @@ function App() {
 
     setState(prev => {
       const nextState = { ...prev };
-      
+
       if (prev.mistakes && prev.mistakes[originalWord.en]) {
         const m = prev.mistakes[originalWord.en];
         const updatedMistake = { ...m, data: newWordData };
@@ -1535,7 +1602,7 @@ function App() {
           nextState.mistakes[newEn] = updatedMistake;
         }
       }
-      
+
       if (prev.historicalMistakes && prev.historicalMistakes[originalWord.en]) {
         const h = prev.historicalMistakes[originalWord.en];
         const updatedHistory = { ...h, data: newWordData };
@@ -1547,7 +1614,7 @@ function App() {
           nextState.historicalMistakes[newEn] = updatedHistory;
         }
       }
-      
+
       return nextState;
     });
 
