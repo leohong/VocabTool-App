@@ -7,10 +7,10 @@
 ## 1. 專案架構規範 (Clean Modular Architecture)
 
 *   **開發源碼目錄 (`www/js/`)**：
-    *   `utils/`：純演算法與 API 工具（`textUtils.js`, `dictionaryApi.js`）。
+    *   `utils/`：純演算法、API 工具、備份匯出與發音（`textUtils.js`, `dictionaryApi.js`, `exportImportUtils.js`, `audioUtils.js`, `sessionUtils.js`）。
     *   `hooks/`：React 業務邏輯與狀態（`useVocabState.js`）。
-    *   `components/`：1:1 原裝 UI 視覺元件 (`Header.js`, `Dashboard.js`, `Sessions.js`, `AudioPlayer.js`, `Modals.js`)。
-    *   `app.js`：核心生命週期進入點。
+    *   `components/`：1:1 原裝 UI 視覺元件與關卡模組 (`Header.js`, `Dashboard.js`, `Sessions.js`, `AudioPlayer.js`, `Modals.js`, `sessions/ScanningSession.js`, `sessions/SpellingSession.js`, `sessions/SummarySession.js`)。
+    *   `app.js`：核心生命週期與路由進入點。
 *   **發布與編譯檔 (`www/index.html`)**：
     *   由建置腳本 `scripts/build.js` 自動生成。
     *   **原因**：Android WebView (`file://`) 嚴格禁止 AJAX 跨檔讀取外部 JSX。預編譯打包可確保離線免 CORS 錯誤。
