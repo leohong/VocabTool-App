@@ -78,3 +78,15 @@ ${bundleContent}
 const outputPath = path.resolve(__dirname, '../www/index.html');
 fs.writeFileSync(outputPath, htmlTemplate);
 console.log(`www/index.html generated successfully from ${files.length} modules! Total length: ${htmlTemplate.length} characters.`);
+
+// Clean deprecated flatDir from android/capacitor-cordova-android-plugins/build.gradle
+const pluginGradlePath = path.resolve(__dirname, '../android/capacitor-cordova-android-plugins/build.gradle');
+if (fs.existsSync(pluginGradlePath)) {
+  let gradleContent = fs.readFileSync(pluginGradlePath, 'utf8');
+  if (gradleContent.includes('flatDir')) {
+    gradleContent = gradleContent.replace(/flatDir\s*\{[\s\S]*?\}/g, '');
+    gradleContent = gradleContent.replace("include: ['*.jar']", "include: ['*.jar', '*.aar']");
+    fs.writeFileSync(pluginGradlePath, gradleContent);
+    console.log('Cleaned deprecated flatDir from android/capacitor-cordova-android-plugins/build.gradle');
+  }
+}
