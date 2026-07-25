@@ -28,7 +28,9 @@ function App() {
     setWordsPerDay,
     ghostsPerDay,
     setGhostsPerDay,
-    defaultState
+    defaultState,
+    isStorageLoaded,
+    initAllData
   } = useVocabState();
 
   const {
@@ -45,14 +47,8 @@ function App() {
   // --- 2. 獨立 UI 狀態 ---
   // ----------------------------------------
   const [isInputFocused, setIsInputFocused] = useState(false);
-  const [speechRate, setSpeechRate] = useState(() => {
-    const saved = localStorage.getItem('vocab_speechRate');
-    return saved ? parseFloat(saved) : 0.8;
-  });
-  const [speechEnabled, setSpeechEnabled] = useState(() => {
-    const saved = localStorage.getItem('vocab_speechEnabled');
-    return saved ? saved === 'true' : true;
-  });
+  const [speechRate, setSpeechRate] = useState(0.8);
+  const [speechEnabled, setSpeechEnabled] = useState(true);
 
   const [view, setView] = useState('dashboard');
   const [showMistakeModal, setShowMistakeModal] = useState(false);
@@ -96,26 +92,15 @@ function App() {
   const [audioQueue, setAudioQueue] = useState([]);
   const [currentAudioIndex, setCurrentAudioIndex] = useState(0);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
-  const [audioSettings, setAudioSettings] = useState(() => {
-    const saved = localStorage.getItem('vocab_audioSettings');
-    const defaultSettings = {
-      repeats: 2,
-      wordPause: 1.5,
-      hideSpelling: false,
-      readExample: false,
-      volume: 80,
-      spellingPause: 0,
-      enVoiceName: '',
-      zhVoiceName: ''
-    };
-    if (saved) {
-      try {
-        return { ...defaultSettings, ...JSON.parse(saved) };
-      } catch (e) {
-        return defaultSettings;
-      }
-    }
-    return defaultSettings;
+  const [audioSettings, setAudioSettings] = useState({
+    repeats: 2,
+    wordPause: 1.5,
+    hideSpelling: false,
+    readExample: false,
+    volume: 80,
+    spellingPause: 0,
+    enVoiceName: '',
+    zhVoiceName: ''
   });
   const [voices, setVoices] = useState([]);
   const [audioStatusText, setAudioStatusText] = useState('準備中');
@@ -134,42 +119,93 @@ function App() {
 
   const inputRef = useRef(null);
 
+  const [appLoaded, setAppLoaded] = useState(false);
+
+  // --- 初始化異步載入所有存檔與偏好設定 ---
+  useEffect(() => {
+    async function loadConfig() {
+      // 1. 初始化資料庫與狀態
+      await initAllData();
+
+      // 2. 讀取偏好設定
+      const savedRate = await window.persistentStorage.getSetting('vocab_speechRate', 0.8);
+      setSpeechRate(parseFloat(savedRate) || 0.8);
+
+      const savedEnabled = await window.persistentStorage.getSetting('vocab_speechEnabled', true);
+      setSpeechEnabled(savedEnabled);
+
+      const savedAudio = await window.persistentStorage.getSetting('vocab_audioSettings', null);
+      const defaultSettings = {
+        repeats: 2,
+        wordPause: 1.5,
+        hideSpelling: false,
+        readExample: false,
+        volume: 80,
+        spellingPause: 0,
+        enVoiceName: '',
+        zhVoiceName: ''
+      };
+      if (savedAudio) {
+        setAudioSettings({ ...defaultSettings, ...savedAudio });
+      } else {
+        setAudioSettings(defaultSettings);
+      }
+
+      setAppLoaded(true);
+    }
+    loadConfig();
+  }, []);
+
   // --- 系統同步與續傳 ---
   useEffect(() => {
-    const tempSession = localStorage.getItem(`vocab_tempSession_${dbName}`);
-    if (tempSession) {
-      const parsed = JSON.parse(tempSession);
-      if (parsed.queue && parsed.queue.length > 0 && parsed.date === new Date().toDateString()) {
-        if (window.confirm("偵測到今日尚未完成的特訓進度，是否繼續？（選擇取消將放棄該次進度）")) {
-          setSessionType(parsed.sessionType);
-          setCurrentSessionWords(parsed.currentSessionWords);
-          setQueue(parsed.queue);
-          setCurrentWord(parsed.queue[0]);
-          setView(parsed.view);
-        } else {
-          localStorage.removeItem(`vocab_tempSession_${dbName}`);
+    if (!isStorageLoaded) return;
+    
+    async function checkTempSession() {
+      const tempSession = await window.persistentStorage.getSetting(`vocab_tempSession_${dbName}`, null);
+      if (tempSession) {
+        const parsed = tempSession;
+        if (parsed.queue && parsed.queue.length > 0 && parsed.date === new Date().toDateString()) {
+          if (window.confirm("偵測到今日尚未完成的特訓進度，是否繼續？（選擇取消將放棄該次進度）")) {
+            setSessionType(parsed.sessionType);
+            setCurrentSessionWords(parsed.currentSessionWords);
+            setQueue(parsed.queue);
+            setCurrentWord(parsed.queue[0]);
+            setView(parsed.view);
+          } else {
+            await window.persistentStorage.setSetting(`vocab_tempSession_${dbName}`, null);
+          }
         }
       }
     }
-  }, [dbName]);
+    checkTempSession();
+  }, [dbName, isStorageLoaded]);
 
   useEffect(() => {
-    localStorage.setItem('vocab_speechRate', speechRate.toString());
-  }, [speechRate]);
+    if (isStorageLoaded) {
+      window.persistentStorage.setSetting('vocab_speechRate', speechRate);
+    }
+  }, [speechRate, isStorageLoaded]);
 
   useEffect(() => {
-    localStorage.setItem('vocab_speechEnabled', speechEnabled.toString());
-  }, [speechEnabled]);
+    if (isStorageLoaded) {
+      window.persistentStorage.setSetting('vocab_speechEnabled', speechEnabled);
+    }
+  }, [speechEnabled, isStorageLoaded]);
 
   // 自動暫存
   useEffect(() => {
-    if (view !== 'dashboard' && view !== 'summary') {
-      const sessionData = { queue, currentSessionWords, sessionType, view, date: new Date().toDateString() };
-      localStorage.setItem(`vocab_tempSession_${dbName}`, JSON.stringify(sessionData));
-    } else if (view === 'summary') {
-      localStorage.removeItem(`vocab_tempSession_${dbName}`);
+    if (!isStorageLoaded) return;
+    
+    async function handleTempSession() {
+      if (view !== 'dashboard' && view !== 'summary') {
+        const sessionData = { queue, currentSessionWords, sessionType, view, date: new Date().toDateString() };
+        await window.persistentStorage.setSetting(`vocab_tempSession_${dbName}`, sessionData);
+      } else if (view === 'summary') {
+        await window.persistentStorage.setSetting(`vocab_tempSession_${dbName}`, null);
+      }
     }
-  }, [queue, view, sessionType, dbName, currentSessionWords]);
+    handleTempSession();
+  }, [queue, view, sessionType, dbName, currentSessionWords, isStorageLoaded]);
 
   // Helper to get Capacitor native Text-to-Speech plugin if available
   const getTtsPlugin = () => {
@@ -234,10 +270,11 @@ function App() {
     if (view === 'spelling' && inputRef.current) inputRef.current.focus();
   }, [currentWord, view]);
 
-  // --- 聽音背單字相關系統與發音引擎 ---
   useEffect(() => {
-    localStorage.setItem('vocab_audioSettings', JSON.stringify(audioSettings));
-  }, [audioSettings]);
+    if (isStorageLoaded) {
+      window.persistentStorage.setSetting('vocab_audioSettings', audioSettings);
+    }
+  }, [audioSettings, isStorageLoaded]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -1007,20 +1044,20 @@ function App() {
     }
   };
 
-  const exportJson = () => {
+  const exportJson = async () => {
     const allDatabases = {};
-    dbList.forEach(db => {
-      const vocab = localStorage.getItem(`vocab_customVocab_${db}`);
-      const st = localStorage.getItem(`vocab_state_${db}`);
-      const wpd = localStorage.getItem(`vocab_wordsPerDay_${db}`);
-      const gpd = localStorage.getItem(`vocab_ghostsPerDay_${db}`);
+    for (const db of dbList) {
+      const vocab = await window.persistentStorage.loadDatabase(db);
+      const st = await window.persistentStorage.loadDbState(db);
+      const wpd = await window.persistentStorage.getSetting(`vocab_wordsPerDay_${db}`, null);
+      const gpd = await window.persistentStorage.getSetting(`vocab_ghostsPerDay_${db}`, null);
       allDatabases[db] = {
-        vocabList: vocab ? JSON.parse(vocab) : null,
-        state: st ? JSON.parse(st) : null,
-        wordsPerDay: wpd ? parseInt(wpd, 10) : null,
-        ghostsPerDay: gpd ? parseInt(gpd, 10) : null,
+        vocabList: vocab && vocab.length > 0 ? vocab : null,
+        state: st,
+        wordsPerDay: wpd,
+        ghostsPerDay: gpd,
       };
-    });
+    }
 
     const backup = {
       version: "2.0",
@@ -1049,7 +1086,7 @@ function App() {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const data = JSON.parse(event.target.result);
 
@@ -1065,7 +1102,7 @@ function App() {
 
               if (imported.length > 0) {
                 setVocabList(imported);
-                localStorage.setItem(`vocab_customVocab_${dbName}`, JSON.stringify(imported));
+                await window.persistentStorage.saveDatabase(dbName, imported);
                 alert(`單字清單匯入成功！共載入 ${imported.length} 個單字。`);
               } else {
                 alert(`匯入失敗，未找到有效的英文與中文欄位。`);
@@ -1083,18 +1120,22 @@ function App() {
             const importedSpeechRate = backupGlobal.speechRate || 0.8;
             const importedSpeechEnabled = backupGlobal.speechEnabled !== undefined ? backupGlobal.speechEnabled : true;
 
-            localStorage.setItem('vocab_dbList', JSON.stringify(importedDbList));
-            localStorage.setItem('vocab_currentDB', importedCurrentDB);
-            localStorage.setItem('vocab_speechRate', importedSpeechRate.toString());
-            localStorage.setItem('vocab_speechEnabled', importedSpeechEnabled.toString());
+            await window.persistentStorage.saveDbList(importedDbList);
+            await window.persistentStorage.setSetting('vocab_currentDB', importedCurrentDB);
+            await window.persistentStorage.setSetting('vocab_speechRate', importedSpeechRate);
+            await window.persistentStorage.setSetting('vocab_speechEnabled', importedSpeechEnabled);
 
-            Object.keys(data.allDatabases).forEach(db => {
+            for (const db of Object.keys(data.allDatabases)) {
               const dbData = data.allDatabases[db];
-              if (dbData.vocabList) localStorage.setItem(`vocab_customVocab_${db}`, JSON.stringify(dbData.vocabList));
-              if (dbData.state) localStorage.setItem(`vocab_state_${db}`, JSON.stringify(dbData.state));
-              if (dbData.wordsPerDay !== null && dbData.wordsPerDay !== undefined) localStorage.setItem(`vocab_wordsPerDay_${db}`, dbData.wordsPerDay);
-              if (dbData.ghostsPerDay !== null && dbData.ghostsPerDay !== undefined) localStorage.setItem(`vocab_ghostsPerDay_${db}`, dbData.ghostsPerDay);
-            });
+              if (dbData.vocabList) await window.persistentStorage.saveDatabase(db, dbData.vocabList);
+              if (dbData.state) await window.persistentStorage.saveDbState(db, dbData.state);
+              if (dbData.wordsPerDay !== null && dbData.wordsPerDay !== undefined) {
+                await window.persistentStorage.setSetting(`vocab_wordsPerDay_${db}`, dbData.wordsPerDay);
+              }
+              if (dbData.ghostsPerDay !== null && dbData.ghostsPerDay !== undefined) {
+                await window.persistentStorage.setSetting(`vocab_ghostsPerDay_${db}`, dbData.ghostsPerDay);
+              }
+            }
 
             setDbList(importedDbList);
             setSpeechRate(importedSpeechRate);
@@ -1102,14 +1143,14 @@ function App() {
             setDbName(importedCurrentDB);
 
             if (dbName === importedCurrentDB) {
-              const savedState = localStorage.getItem(`vocab_state_${importedCurrentDB}`);
-              setState(savedState ? JSON.parse(savedState) : defaultState);
-              const savedVocab = localStorage.getItem(`vocab_customVocab_${importedCurrentDB}`);
-              setVocabList(savedVocab ? JSON.parse(savedVocab) : rawVocab);
-              const savedWords = localStorage.getItem(`vocab_wordsPerDay_${importedCurrentDB}`);
-              setWordsPerDay(savedWords ? parseInt(savedWords, 10) : 50);
-              const savedGhosts = localStorage.getItem(`vocab_ghostsPerDay_${importedCurrentDB}`);
-              setGhostsPerDay(savedGhosts ? parseInt(savedGhosts, 10) : 10);
+              const savedState = await window.persistentStorage.loadDbState(importedCurrentDB);
+              setState(savedState ? savedState : defaultState);
+              const savedVocab = await window.persistentStorage.loadDatabase(importedCurrentDB);
+              setVocabList(savedVocab && savedVocab.length > 0 ? savedVocab : rawVocab);
+              const savedWords = await window.persistentStorage.getSetting(`vocab_wordsPerDay_${importedCurrentDB}`, 50);
+              setWordsPerDay(savedWords);
+              const savedGhosts = await window.persistentStorage.getSetting(`vocab_ghostsPerDay_${importedCurrentDB}`, 10);
+              setGhostsPerDay(savedGhosts);
             }
 
             alert(`系統完整還原成功！已成功載入 ${importedDbList.length} 個字庫，並切換至：${importedCurrentDB}`);
@@ -1127,14 +1168,14 @@ function App() {
           if (!currentDbList.includes(importedDbName)) {
             currentDbList.push(importedDbName);
             setDbList(currentDbList);
-            localStorage.setItem('vocab_dbList', JSON.stringify(currentDbList));
+            await window.persistentStorage.saveDbList(currentDbList);
           }
 
-          localStorage.setItem('vocab_currentDB', importedDbName);
-          localStorage.setItem(`vocab_state_${importedDbName}`, JSON.stringify(importedState));
-          localStorage.setItem(`vocab_customVocab_${importedDbName}`, JSON.stringify(data.vocabList || data.customVocab || rawVocab));
-          localStorage.setItem(`vocab_wordsPerDay_${importedDbName}`, data.wordsPerDay || 50);
-          localStorage.setItem(`vocab_ghostsPerDay_${importedDbName}`, data.ghostsPerDay || 10);
+          await window.persistentStorage.setSetting('vocab_currentDB', importedDbName);
+          await window.persistentStorage.saveDbState(importedDbName, importedState);
+          await window.persistentStorage.saveDatabase(importedDbName, data.vocabList || data.customVocab || rawVocab);
+          await window.persistentStorage.setSetting(`vocab_wordsPerDay_${importedDbName}`, data.wordsPerDay || 50);
+          await window.persistentStorage.setSetting(`vocab_ghostsPerDay_${importedDbName}`, data.ghostsPerDay || 10);
 
           setDbName(importedDbName);
           setState(importedState);
@@ -1179,7 +1220,7 @@ function App() {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const text = event.target.result;
       const lines = text.split("\n");
       const importedVocab = [];
@@ -1204,7 +1245,7 @@ function App() {
       if (importedVocab.length > 0) {
         if (window.confirm(`確定匯入單字庫文字檔（共偵測到 ${importedVocab.length} 字）並覆蓋目前的字庫【${dbName}】嗎？`)) {
           setVocabList(importedVocab);
-          localStorage.setItem(`vocab_customVocab_${dbName}`, JSON.stringify(importedVocab));
+          await window.persistentStorage.saveDatabase(dbName, importedVocab);
           alert(`成功匯入單字庫！共載入 ${importedVocab.length} 個單字。`);
         }
       } else {
@@ -1247,7 +1288,7 @@ function App() {
       if (importedVocab.length > 0) {
         if (window.confirm(`確定要載入內建的【${titleName}】（共 ${importedVocab.length} 字）並覆蓋目前的字庫【${dbName}】嗎？`)) {
           setVocabList(importedVocab);
-          localStorage.setItem(`vocab_customVocab_${dbName}`, JSON.stringify(importedVocab));
+          await window.persistentStorage.saveDatabase(dbName, importedVocab);
           alert(`成功載入內建【${titleName}】！共載入 ${importedVocab.length} 個單字。`);
         }
       } else {
@@ -1263,7 +1304,7 @@ function App() {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const text = event.target.result;
       if (text.includes("歷史殿堂單字個人紀錄")) {
         const lines = text.split("\n");
@@ -1312,7 +1353,7 @@ function App() {
             const toAppend = importedVocab.filter(w => !existingEnSet.has(w.en.trim().toLowerCase()));
             const mergedVocab = [...vocabList, ...toAppend];
             setVocabList(mergedVocab);
-            localStorage.setItem(`vocab_customVocab_${dbName}`, JSON.stringify(mergedVocab));
+            await window.persistentStorage.saveDatabase(dbName, mergedVocab);
             alert(`成功將歷史殿堂單字追加至目前字典字庫！共追加 ${toAppend.length} 字（去重後字庫總計 ${mergedVocab.length} 字）。\n（此操作未重置當前學習天數與進度。）`);
           }
         } else {
@@ -1333,7 +1374,6 @@ function App() {
       if (cleaned && !dbList.includes(cleaned)) {
         const updated = [...dbList, cleaned];
         setDbList(updated);
-        localStorage.setItem('vocab_dbList', JSON.stringify(updated));
       }
       if (cleaned) setDbName(cleaned);
     }
@@ -1343,14 +1383,21 @@ function App() {
     if (window.confirm(`確定清除【${dbName}】的所有學習紀錄嗎？(包含歷史殿堂，無法復原)`)) setState(defaultState);
   };
 
-  const deleteCurrentDB = () => {
+  const deleteCurrentDB = async () => {
     if (window.confirm(`警告：確定要徹底刪除【${dbName}】字庫的所有資料與設定嗎？此操作無法復原。`)) {
-      Object.keys(localStorage).forEach(key => { if (key.includes(`_${dbName}`)) localStorage.removeItem(key); });
+      await window.persistentStorage.deleteDatabaseFiles(dbName);
+      await window.persistentStorage.setSetting(`vocab_wordsPerDay_${dbName}`, null);
+      await window.persistentStorage.setSetting(`vocab_ghostsPerDay_${dbName}`, null);
+      await window.persistentStorage.setSetting(`vocab_tempSession_${dbName}`, null);
+
       const updatedList = dbList.filter(name => name !== dbName);
-      const nextDb = updatedList.length > 0 ? updatedList[0] : 'vocab_2000';
-      setDbList(updatedList);
-      localStorage.setItem('vocab_dbList', JSON.stringify(updatedList.length > 0 ? updatedList : ['vocab_2000']));
-      setDbName(nextDb);
+      const finalDbList = updatedList.length > 0 ? updatedList : ['vocab_2000'];
+      setDbList(finalDbList);
+      await window.persistentStorage.saveDbList(finalDbList);
+
+      const nextDb = finalDbList[0];
+      await window.persistentStorage.setSetting('vocab_currentDB', nextDb);
+
       alert(`已刪除字庫【${dbName}】。`);
       window.location.reload();
     }
@@ -1405,7 +1452,7 @@ function App() {
     const updatedList = [...vocabList];
     updatedList.splice(indexInVocab, 1);
     setVocabList(updatedList);
-    localStorage.setItem(`vocab_customVocab_${dbName}`, JSON.stringify(updatedList));
+    window.persistentStorage.saveDatabase(dbName, updatedList);
 
     setState(prev => {
       const nextState = { ...prev };
@@ -1472,7 +1519,7 @@ function App() {
     const updatedList = [...vocabList];
     updatedList[editingIndex] = newWordData;
     setVocabList(updatedList);
-    localStorage.setItem(`vocab_customVocab_${dbName}`, JSON.stringify(updatedList));
+    window.persistentStorage.saveDatabase(dbName, updatedList);
 
     setState(prev => {
       const nextState = { ...prev };
@@ -1553,18 +1600,17 @@ function App() {
     setDictResults([]);
 
     const matches = [];
-    dbList.forEach(db => {
-      const listStr = localStorage.getItem(`vocab_customVocab_${db}`);
-      if (listStr) {
-        const list = JSON.parse(listStr);
+    for (const db of dbList) {
+      const list = await window.persistentStorage.loadDatabase(db);
+      if (list && list.length > 0) {
         const foundIdx = list.findIndex(w => w.en.trim().toLowerCase() === query);
         if (foundIdx !== -1) {
-          const wPerDay = parseInt(localStorage.getItem(`vocab_wordsPerDay_${db}`) || '50', 10);
+          const wPerDay = await window.persistentStorage.getSetting(`vocab_wordsPerDay_${db}`, 50);
           const dayNum = Math.floor(foundIdx / wPerDay) + 1;
           matches.push({ db, word: list[foundIdx], day: dayNum });
         }
       }
-    });
+    }
     setLocalMatches(matches);
 
     const currentDbMatch = matches.find(m => m.db === dbName);
@@ -1600,7 +1646,7 @@ function App() {
     await performSearch(searchQuery);
   };
 
-  const handleAddWord = (e) => {
+  const handleAddWord = async (e) => {
     e.preventDefault();
     const enVal = formEn.trim();
     const posVal = formPos.trim();
@@ -1631,7 +1677,7 @@ function App() {
     }
 
     setVocabList(updatedList);
-    localStorage.setItem(`vocab_customVocab_${dbName}`, JSON.stringify(updatedList));
+    await window.persistentStorage.saveDatabase(dbName, updatedList);
 
     alert(`成功將單字【${enVal}】${existingIdx !== -1 ? '修改' : '新增'}至目前字庫中！`);
 
@@ -1646,6 +1692,18 @@ function App() {
   // ----------------------------------------
   // --- 6. 畫面渲染 (UI 分派) ---
   // ----------------------------------------
+  if (!appLoaded) {
+    return (
+      <div className="w-full max-w-md mx-auto flex flex-col items-center justify-center min-h-[60vh] bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-2xl text-center space-y-6 animate-[fadeIn_0.3s_ease-in-out]">
+        <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+        <div>
+          <h2 className="text-2xl font-black text-indigo-400 tracking-wide">極限單字特訓系統</h2>
+          <p className="text-slate-400 text-sm mt-2 font-medium">讀取特訓存檔中，請稍候...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full flex flex-col">
 

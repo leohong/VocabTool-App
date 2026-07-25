@@ -3,6 +3,7 @@ const path = require('path');
 
 const files = [
   'www/js/utils/textUtils.js',
+  'www/js/utils/persistentStorage.js',
   'www/js/utils/dictionaryApi.js',
   'www/js/hooks/useVocabState.js',
   'www/js/components/Icons.js',
