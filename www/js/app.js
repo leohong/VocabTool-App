@@ -580,42 +580,8 @@ function App() {
         setAudioSubStep('spelling');
         setAudioStatusText(`拼讀字母...`);
         const chars = word.en.toLowerCase().replace(/[^a-z']/g, '').split('');
-
-        let spellingFinished = false;
-
-        // Dynamic highlight delay checking if the audio has completed early
-        const delayHighlight = (ms) => {
-          return new Promise((resolve) => {
-            const start = Date.now();
-            const timer = setInterval(() => {
-              if (spellingFinished || signal.aborted || Date.now() - start >= ms) {
-                clearInterval(timer);
-                resolve();
-              }
-            }, 25);
-          });
-        };
-
-        const runHighlight = async () => {
-          const startDelayMs = Math.round((settings.spellingStartDelay !== undefined ? settings.spellingStartDelay : 0.15) * 1000);
-          if (startDelayMs > 0) {
-            await delayHighlight(startDelayMs);
-          }
-          const charDuration = Math.round(480 / (speechRate || 1));
-          for (let cIdx = 0; cIdx < chars.length; cIdx++) {
-            if (spellingFinished || signal.aborted) break;
-            setActiveSpellingChar(cIdx);
-            await delayHighlight(charDuration + (settings.spellingPause ?? 0) * 1000);
-          }
-          setActiveSpellingChar(-1);
-        };
-
-        runHighlight();
-
         const spellingStr = chars.join(', ');
         await speakAsync(spellingStr, 'en-US', settings.enVoiceName, signal);
-        spellingFinished = true;
-        setActiveSpellingChar(-1);
         if (signal.aborted) break;
         await delayAsync(500, signal);
 
