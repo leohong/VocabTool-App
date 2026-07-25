@@ -37,16 +37,17 @@ window.MistakeModal = ({
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     <button
                       onClick={() => speak(item.data.en, true)}
-                      className="p-2 bg-slate-800 text-indigo-400 rounded-lg border border-slate-700 flex-shrink-0"
+                      className="p-2 bg-slate-800 hover:bg-slate-700 text-indigo-400 rounded-lg border border-slate-700 shrink-0"
+                      title="發音"
                     >
                       <IconVolume />
                     </button>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-baseline gap-2">
-                        <span className="font-bold font-mono text-lg text-slate-200 truncate">{item.data.en}</span>
-                        <span className="text-xs text-indigo-400 font-mono">({item.data.pos})</span>
+                      <div className="flex flex-wrap items-baseline gap-1.5 sm:gap-2">
+                        <span className="font-bold font-mono text-base text-slate-200 break-all">{item.data.en}</span>
+                        <span className="text-xs text-indigo-400 font-mono whitespace-nowrap">({item.data.pos})</span>
                       </div>
-                      <span className="text-sm text-slate-400 break-words">{item.data.zh}</span>
+                      <span className="text-xs sm:text-sm text-slate-400 break-words block mt-0.5">{item.data.zh}</span>
                       {item.data.eg && <div className="text-xs text-slate-500 italic mt-1 font-sans break-words">{item.data.eg}</div>}
                     </div>
                   </div>
@@ -60,7 +61,7 @@ window.MistakeModal = ({
                         <div className="bg-emerald-500 h-2 transition-all duration-300" style={{ width: `${progress}%` }}></div>
                       </div>
                     </div>
-                    <div className="flex gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                    <div className="flex gap-1.5 shrink-0 opacity-90 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => {
                           if (vocabIndex !== -1) {

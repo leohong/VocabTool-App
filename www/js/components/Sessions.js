@@ -23,18 +23,18 @@ window.ScanningSession = ({
   return (
     <div className="flex flex-col items-center animate-[fadeIn_0.3s_ease-in-out] w-full">
       <div className="w-full flex justify-between items-center mb-4">
-        <div className="text-slate-400 font-medium flex items-center gap-2">
+        <div className="text-slate-400 font-medium flex items-center gap-2 text-xs sm:text-sm">
           <IconAlert />第一關：快速篩選 (剩 {queue.length} 字)
         </div>
         <button
           onClick={handleExitSession}
-          className="text-xs px-3 py-1.5 bg-slate-800 hover:bg-red-950/40 text-slate-400 hover:text-red-400 rounded-lg border border-slate-700 transition-colors"
+          className="text-xs px-3 py-1.5 bg-slate-800 hover:bg-red-950/40 text-slate-400 hover:text-red-400 rounded-lg border border-slate-700 transition-colors shrink-0 whitespace-nowrap"
         >
           暫停存檔
         </button>
       </div>
 
-      <div className="bg-slate-800 w-full min-h-[320px] rounded-3xl shadow-2xl border border-slate-700 flex flex-col items-center justify-center p-6 md:p-8 mb-8 text-center relative touch-none select-none">
+      <div className="bg-slate-800 w-full min-h-[320px] rounded-3xl shadow-2xl border border-slate-700 flex flex-col items-center justify-center p-6 pt-14 md:p-8 md:pt-16 mb-8 text-center relative touch-none select-none">
         <div className="absolute top-6 right-6 flex gap-2 z-10">
           <button
             type="button"
@@ -145,22 +145,22 @@ window.SpellingSession = ({
   return (
     <div className="flex flex-col items-center animate-[fadeIn_0.3s_ease-in-out] w-full">
       <div className="w-full flex justify-between items-center mb-4">
-        <div className="text-indigo-400 font-medium flex items-center gap-2">
+        <div className="text-indigo-400 font-medium flex items-center gap-2 text-xs sm:text-sm">
           <span>✍️ 盲測輸出中 (剩 {queue.length} 字)</span>
         </div>
         <button
           onClick={handleExitSession}
-          className="text-xs px-3 py-1.5 bg-slate-800 hover:bg-red-950/40 text-slate-400 hover:text-red-400 rounded-lg border border-slate-700 transition-colors"
+          className="text-xs px-3 py-1.5 bg-slate-800 hover:bg-red-950/40 text-slate-400 hover:text-red-400 rounded-lg border border-slate-700 transition-colors shrink-0 whitespace-nowrap"
         >
           暫停存檔
         </button>
       </div>
 
-      <div className={`bg-slate-800 w-full rounded-3xl shadow-2xl border text-center transition-all duration-300 ${
+      <div className={`bg-slate-800 w-full rounded-3xl shadow-2xl border text-center transition-all duration-300 relative ${
         typoCount === 1 ? 'border-amber-500/80 shadow-[0_0_15px_rgba(245,158,11,0.2)]' :
         typoCount >= 2 ? 'border-red-500/80 shadow-[0_0_15px_rgba(239,68,68,0.2)]' :
         'border-slate-700'
-      } ${isInputFocused ? 'p-5 md:p-6 mb-4' : 'p-6 md:p-8 mb-6'}`}>
+      } ${isInputFocused ? 'p-5 pt-12 md:p-6 md:pt-14 mb-4' : 'p-6 pt-12 md:p-8 md:pt-14 mb-6'}`}>
         
         <div className="absolute top-4 right-4 flex gap-2 z-10">
           <button

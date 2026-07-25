@@ -100,6 +100,7 @@ function App() {
     readExample: false,
     volume: 80,
     spellingPause: 0,
+    spellingStartDelay: 0.15,
     enVoiceName: '',
     zhVoiceName: ''
   });
@@ -596,6 +597,10 @@ function App() {
         };
 
         const runHighlight = async () => {
+          const startDelayMs = Math.round((settings.spellingStartDelay !== undefined ? settings.spellingStartDelay : 0.15) * 1000);
+          if (startDelayMs > 0) {
+            await delayHighlight(startDelayMs);
+          }
           const charDuration = Math.round(480 / (speechRate || 1));
           for (let cIdx = 0; cIdx < chars.length; cIdx++) {
             if (spellingFinished || signal.aborted) break;

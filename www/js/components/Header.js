@@ -23,7 +23,7 @@ window.Header = ({
       </h1>
 
       {/* 狀態、打卡、雲端同步與進度選單 */}
-      <div className="flex items-center w-full md:w-auto gap-2 overflow-x-auto pb-1 md:pb-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="flex flex-wrap items-center justify-between sm:justify-start w-full md:w-auto gap-1.5 sm:gap-2">
         {/* 狀態燈號 */}
         <div className={`border px-2 py-1 rounded-md flex items-center gap-1.5 transition-colors shadow-sm shrink-0 ${indicator.bg} ${indicator.border}`}>
           <span className="text-[10px]">{indicator.icon}</span>
@@ -40,13 +40,13 @@ window.Header = ({
         )}
 
         {/* 進度選單 */}
-        <div className="ml-auto flex items-center gap-1.5 text-xs sm:text-sm text-slate-400 font-medium shrink-0">
+        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium shrink-0 whitespace-nowrap ml-auto sm:ml-0">
           進度:
           <select
             value={currentDay}
             onChange={(e) => setCurrentDay(parseInt(e.target.value, 10))}
             disabled={view !== 'dashboard'}
-            className="bg-slate-900 border border-slate-700 text-indigo-300 rounded-md px-2 py-1 text-xs focus:outline-none focus:border-indigo-500 font-mono"
+            className="bg-slate-900 border border-slate-700 text-indigo-300 rounded-md px-1.5 py-1 text-xs focus:outline-none focus:border-indigo-500 font-mono"
           >
             {Array.from({ length: Math.max(50, Math.ceil(vocabListLength / wordsPerDay)) }, (_, i) => i + 1).map(d => (
               <option key={d} value={d}>第 {d} 天</option>

@@ -29,34 +29,35 @@ window.PreviewModal = ({
             <div className="text-center py-12 text-slate-500">此天數目前沒有單字。</div>
           ) : (
             baseWords.map((word, idx) => (
-              <div key={idx} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-xl border border-slate-700/60 gap-3 group">
-                <div className="flex items-center gap-3 min-w-0">
+              <div key={idx} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-xl border border-slate-700/60 gap-2.5 sm:gap-3 group">
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
                   <button
                     onClick={() => speak(word.en, true)}
-                    className="p-2 bg-slate-800 text-indigo-400 rounded-lg border border-slate-700 flex-shrink-0"
+                    className="p-2 bg-slate-800 hover:bg-slate-700 text-indigo-400 rounded-lg border border-slate-700 shrink-0"
+                    title="發音"
                   >
                     <IconVolume />
                   </button>
-                  <div className="min-w-0">
-                    <div className="flex items-baseline gap-2">
-                      <span className="font-bold font-mono text-base text-slate-200 truncate">{word.en}</span>
-                      <span className="text-xs text-indigo-400 font-mono">({word.pos})</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-baseline gap-1.5 sm:gap-2">
+                      <span className="font-bold font-mono text-sm sm:text-base text-slate-200 break-all">{word.en}</span>
+                      <span className="text-xs text-indigo-400 font-mono whitespace-nowrap">({word.pos})</span>
                     </div>
-                    <span className="text-sm text-slate-400 break-words">{word.zh}</span>
+                    <span className="text-xs sm:text-sm text-slate-400 break-words block mt-0.5">{word.zh}</span>
                     {word.eg && <div className="text-xs text-slate-500 italic mt-1 font-sans break-words">{word.eg}</div>}
                   </div>
                 </div>
-                <div className="flex gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                <div className="flex gap-1.5 shrink-0 opacity-90 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => startEditing(vocabList.findIndex(w => w.en.trim().toLowerCase() === word.en.trim().toLowerCase()))}
-                    className="p-1.5 bg-slate-800 text-indigo-400 hover:text-indigo-300 rounded border border-slate-700 text-xs"
+                    className="p-1.5 bg-slate-800 hover:bg-indigo-900 text-indigo-300 rounded border border-slate-700 text-xs"
                     title="編輯"
                   >
                     ✏️
                   </button>
                   <button
                     onClick={() => handleDeleteWord(vocabList.findIndex(w => w.en.trim().toLowerCase() === word.en.trim().toLowerCase()), word)}
-                    className="p-1.5 bg-slate-800 text-rose-400 hover:text-rose-300 rounded border border-slate-700 text-xs"
+                    className="p-1.5 bg-slate-800 hover:bg-rose-900 text-rose-300 rounded border border-slate-700 text-xs"
                     title="刪除"
                   >
                     🗑️

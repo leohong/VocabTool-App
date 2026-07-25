@@ -57,35 +57,36 @@ window.AllPreviewModal = ({
               <>
                 <div className="space-y-2">
                   {paginated.map((word) => (
-                    <div key={word.originalIdx} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-xl border border-slate-700/60 gap-3 group">
-                      <div className="flex items-center gap-3 min-w-0">
+                    <div key={word.originalIdx} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-xl border border-slate-700/60 gap-2.5 sm:gap-3 group">
+                      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
                         <button
                           onClick={() => speak(word.en, true)}
-                          className="p-2 bg-slate-800 text-indigo-400 rounded-lg border border-slate-700 flex-shrink-0"
+                          className="p-2 bg-slate-800 hover:bg-slate-700 text-indigo-400 rounded-lg border border-slate-700 shrink-0"
+                          title="發音"
                         >
                           <IconVolume />
                         </button>
-                        <div className="min-w-0">
-                          <div className="flex items-baseline gap-2">
-                            <span className="font-bold font-mono text-base text-slate-200 truncate">{word.en}</span>
-                            <span className="text-xs text-indigo-400 font-mono">({word.pos})</span>
-                            <span className="text-[10px] text-slate-500">#{word.originalIdx + 1}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-baseline gap-1.5 sm:gap-2">
+                            <span className="font-bold font-mono text-sm sm:text-base text-slate-200 break-all">{word.en}</span>
+                            <span className="text-xs text-indigo-400 font-mono whitespace-nowrap">({word.pos})</span>
+                            <span className="text-[10px] text-slate-500 font-mono whitespace-nowrap">#{word.originalIdx + 1}</span>
                           </div>
-                          <span className="text-sm text-slate-400 break-words">{word.zh}</span>
+                          <span className="text-xs sm:text-sm text-slate-400 break-words block mt-0.5">{word.zh}</span>
                           {word.eg && <div className="text-xs text-slate-500 italic mt-1 font-sans break-words">{word.eg}</div>}
                         </div>
                       </div>
-                      <div className="flex gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                      <div className="flex gap-1.5 shrink-0 opacity-90 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => startEditing(word.originalIdx)}
-                          className="p-1.5 bg-slate-800 text-indigo-400 hover:text-indigo-300 rounded border border-slate-700 text-xs"
+                          className="p-1.5 bg-slate-800 hover:bg-indigo-900 text-indigo-300 rounded border border-slate-700 text-xs"
                           title="編輯"
                         >
                           ✏️
                         </button>
                         <button
                           onClick={() => handleDeleteWord(word.originalIdx)}
-                          className="p-1.5 bg-slate-800 text-rose-400 hover:text-rose-300 rounded border border-slate-700 text-xs"
+                          className="p-1.5 bg-slate-800 hover:bg-rose-900 text-rose-300 rounded border border-slate-700 text-xs"
                           title="刪除"
                         >
                           🗑️
@@ -97,19 +98,21 @@ window.AllPreviewModal = ({
 
                 {/* Pagination Navigation */}
                 {totalPages > 1 && (
-                  <div className="flex justify-between items-center pt-4 text-xs font-mono">
+                  <div className="flex justify-between items-center gap-1 sm:gap-2 pt-3 text-xs font-mono border-t border-slate-700/40 mt-2">
                     <button
                       disabled={currentPage === 1}
                       onClick={() => setAllPage(p => Math.max(1, p - 1))}
-                      className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 disabled:opacity-40 rounded"
+                      className="px-2.5 sm:px-3 py-1.5 bg-slate-700 hover:bg-slate-600 disabled:opacity-40 rounded text-slate-200 shrink-0 whitespace-nowrap"
                     >
                       ◀ 上一頁
                     </button>
-                    <span className="text-slate-400 font-sans">第 {currentPage} / {totalPages} 頁 (共 {filtered.length} 字)</span>
+                    <span className="text-slate-400 font-sans text-[11px] sm:text-xs text-center truncate px-1">
+                      第 {currentPage} / {totalPages} 頁 (共 {filtered.length} 字)
+                    </span>
                     <button
                       disabled={currentPage === totalPages}
                       onClick={() => setAllPage(p => Math.min(totalPages, p + 1))}
-                      className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 disabled:opacity-40 rounded"
+                      className="px-2.5 sm:px-3 py-1.5 bg-slate-700 hover:bg-slate-600 disabled:opacity-40 rounded text-slate-200 shrink-0 whitespace-nowrap"
                     >
                       下一頁 ▶
                     </button>
