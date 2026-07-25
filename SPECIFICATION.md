@@ -17,20 +17,24 @@
     *   **Tailwind CSS**：負責介面樣式排版（Glassmorphism 玻璃質感、極深色科技暗黑風格）。
     *   **Babel (Standalone)**：瀏覽器端即時轉譯。
 *   **資料儲存與備份 (Data & Backup)**：
-    *   **本地優先儲存**：所有的單字庫與學習進度皆本地化存放於 `localStorage` 中。
+    *   **混合原生持久儲存**：所有的偏好設定使用 `@capacitor/preferences` 儲存，大型字庫與學習進度使用 `@capacitor/filesystem` 寫入 Android/iOS 原生沙盒之 JSON 實體檔案中，保證資料永不因 OS 清理快取而丟失。
+    *   **網頁 Fallback 機制**：在 Web 瀏覽器環境中，自動 Promise 封裝降級使用瀏覽器的 `localStorage`，保證雙平台架構完全相容。
     *   **手動 JSON/TXT 備份還原**：提供手動下載 `極限完整備份.json` 系統檔與 `字典/歷史殿堂.txt` 檔案，方便使用者手動進行資料的移轉與備份，100% 離線可用。
-
 
 ---
 
 ## 2. 資料庫設計與結構 (Database Design & Schemas)
 
-### 2.1 本地儲存金鑰定義 (`localStorage`)
-*   `vocab_currentDB`：當前選擇的單字庫名稱（例如 `vocab_2000`）。
-*   `vocab_dbList`：使用者已建立或匯入的字庫名稱列表（預設包含 `vocab_2000`, `vocab_7000`）。
-*   `vocab_speechRate`：單字朗讀語速設定（預設為 `0.8`）。
-*   `vocab_customVocab_{dbName}`：存放對應字庫的單字庫陣列 (`Word[]`)。
-*   `vocab_state_{dbName}`：存放對應字庫的特訓狀態、錯題本與歷史殿堂數據。
+### 2.1 本地儲存與原生沙盒檔案定義
+*   **Preferences 偏好設定 (原生 SharedPreferences/NSUserDefaults 或 Web LocalStorage)**：
+    *   `vocab_currentDB`：當前選擇的單字庫名稱（預設為 `vocab_2000`）。
+    *   `vocab_dbList`：字庫名稱列表（預設包含 `vocab_2000`, `vocab_7000`）。
+    *   `vocab_speechRate`：朗讀語速（預設為 `0.8`）。
+    *   `vocab_speechEnabled`：發音開關（預設為 `true`）。
+    *   `vocab_audioSettings`：聽寫朗讀參數設定。
+*   **Filesystem 原生沙盒檔案 (原生沙盒 Directory.Data 下之實體 JSON 檔，或 Web LocalStorage)**：
+    *   `vocab_data_{dbName}.json` (Web 為 `vocab_customVocab_{dbName}`)：存放字庫的單字陣列 (`Word[]`)。
+    *   `vocab_state_{dbName}.json` (Web 為 `vocab_state_{dbName}`)：存放字庫的特訓進度天數、錯題本與歷史殿堂數據 (`DBState`)。
 
 ### 2.2 單字資料結構 (`Word`)
 ```typescript
@@ -138,4 +142,14 @@ $$\text{連續拼對目標次數} = \text{Min}(\text{該字錯誤次數} \times 
 ### 7.2 預編譯打包機制 (`scripts/build.js`)
 *   **原因**：Android 原生 WebView 因安全性原則不支援 AJAX 本地 JSX/JS 跨檔讀取。
 *   **作法**：透過建置腳本將 10 個模組依賴順序（Utilities ➔ Hooks ➔ Components ➔ Entrypoint）進行合併，以 Babel Standalone 形式直接寫入發布用 `www/index.html` 中的單一 `<script>` 標籤中。
+
+---
+
+## 8. 自託管熱更新機制 (Self-Hosted OTA Hot Code Push)
+
+為了提升維護效率、免除每次微調代碼都需要編譯與商店審核的繁瑣流程，本系統整合了 **Capgo (Capacitor-Updater)** 熱更新外掛，採用自託管模式：
+*   **開機安全確認 (`notifyAppReady`)**：App 啟動時向原生端發送就緒宣告，以防損壞更新包造成閃退，自動回滾到前一個穩定版本。
+*   **異步更新比對 (`checkForUpdates`)**：啟動 3 秒後於背景 fetch 遠端的 `update.json` 版本定義檔，當 `遠端版本 > 本地版本` 時，彈出更新確認對話框，確認後背景下載 ZIP 解壓並自動重啟載入新版。
+*   **斷網容錯防護**：網路中斷或連線失敗時，更新機制會默默失敗放行，100% 確保 App 在離線狀態下正常運作。
+*   **自動化 OTA 打包工具 (`scripts/zip_www.js`)**：使用 PowerShell 將編譯好的 `www/` 目錄壓縮為 `dist/www.zip`，以便直接作為 GitHub Releases 發行資源。
 

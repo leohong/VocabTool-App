@@ -20,7 +20,8 @@
 * 🎧 **盲聽特訓播放器**：預設美式發音與台灣國語，支援自訂語速、字母拼讀停頓、聽寫高亮動畫與遮蔽模式。
 * ☁️ **雙軌雲端同步 (v1.5.0)**：支援 Google 帳號授權同步 (Google Drive AppData) 與 Firebase 自訂金鑰備份還原。
 * 📦 **模組化程式碼結構**：全新重構的代碼，將核心拆分為模組與 Hooks，使開發架構更易讀好維護。
-* 💾 **100% 離線可用與自動存檔**：所有資料儲存於本地 `localStorage`，不依賴後端伺服器。
+* 💾 **100% 離線可用與原生持久化儲存**：所有偏好設定與設定值儲存於 `@capacitor/preferences` 原生偏好設定，大型字庫與學習進度寫入 `@capacitor/filesystem` 原生沙盒實體 JSON 檔案，防止系統因快取清理而清空資料。
+* ⚡ **自託管熱更新 (OTA v1.6.2)**：整合 Capgo，未來更新網頁資源免重新商店審查、免 Mac 編譯，開機自動背景秒級更新。
 
 ---
 
@@ -109,8 +110,33 @@
 * **跨平台框架**：Capacitor 7 (`@capacitor/core`, `@capacitor/android`)
 * **前端框架**：React 18 (via CDN / Standalone)
 * **CSS 樣式**：Tailwind CSS (Glassmorphism 暗黑科技風格)
-* **語音引擎**：Web Speech API (原生 TTS，美式英語語音，速率 0.8)
-* **本地存儲**：HTML5 `localStorage` (資料 100% 留存於用戶手機/瀏覽器本地)
+* **語音引擎**：`@capacitor-community/text-to-speech` 原生 TTS 發音，支援美式英語與自訂速率。
+* **本地存儲**：Preferences 原生偏好設定 + Filesystem 沙盒檔案儲存 (Web 版自動 Promise 降級降落為 `localStorage` 備用)。
+
+---
+
+## ⚡ 自託管熱更新發布指南 (OTA Release Guide)
+
+本專案配置有 Capgo 自託管熱更新。若未來您修改了 `www/` 中的 JS/CSS/Layout 等網頁內容，不需重新打包 APK，依照以下步驟發布更新：
+
+1.  **打包壓縮網頁檔**：
+    在專案根目錄執行 Node.js 打包腳本：
+    ```powershell
+    node scripts/zip_www.js
+    ```
+    這會自動在 `dist/` 目錄下生成 `www.zip`。
+2.  **上傳至 GitHub Release**：
+    在 GitHub 建立一個新 Release（例如版號為 `v1.6.3`），並將 `dist/www.zip` 作為附件上傳。
+3.  **修改版本號設定檔**：
+    修改專案根目錄的 `update.json`：
+    ```json
+    {
+      "version": "1.6.3",
+      "url": "https://github.com/leohong/VocabTool-App/releases/download/v1.6.3/www.zip"
+    }
+    ```
+4.  **推送至 GitHub**：
+    執行 `git push` 把 `update.json` 推上 GitHub。使用者在下次開啟 App 時即會偵測到新版並自動完成熱更新！
 
 ---
 
