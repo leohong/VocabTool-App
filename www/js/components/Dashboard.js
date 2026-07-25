@@ -36,7 +36,8 @@ window.Dashboard = ({
   exportJson,
   handleImportJson,
   resetProgress,
-  deleteCurrentDB
+  deleteCurrentDB,
+  setShowLicensesModal
 }) => {
   const dailyWordsCount = vocabList && vocabList.slice ? vocabList.length : 0;
 
@@ -289,6 +290,12 @@ window.Dashboard = ({
             className="text-[10px] text-slate-500 hover:text-red-400 underline transition-colors"
           >
             重設此區進度
+          </button>
+          <button
+            onClick={() => setShowLicensesModal(true)}
+            className="text-[10px] text-slate-500 hover:text-indigo-400 underline transition-colors font-medium"
+          >
+            開源授權宣告
           </button>
           <button
             onClick={deleteCurrentDB}

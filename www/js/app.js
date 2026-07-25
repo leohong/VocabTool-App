@@ -85,6 +85,7 @@ function App() {
   // --- 聽音背單字狀態 ---
   const [showAudioSetupModal, setShowAudioSetupModal] = useState(false);
   const [showImportOptionsModal, setShowImportOptionsModal] = useState(false);
+  const [showLicensesModal, setShowLicensesModal] = useState(false);
   const [audioSource, setAudioSource] = useState('daily'); // 'daily', 'mistakes', 'history', 'library'
   const [audioRange, setAudioRange] = useState('all'); // 'all', 'page', 'custom', 'word'
   const [audioStartIdx, setAudioStartIdx] = useState(1);
@@ -1828,6 +1829,7 @@ function App() {
             handleImportJson={handleImportJson}
             resetProgress={resetProgress}
             deleteCurrentDB={deleteCurrentDB}
+            setShowLicensesModal={setShowLicensesModal}
           />
         )}
 
@@ -2021,6 +2023,11 @@ function App() {
         setShowImportOptionsModal={setShowImportOptionsModal}
         loadBuiltInVocab={loadBuiltInVocab}
         handleImportTXT={handleImportTXT}
+      />
+
+      <LicensesModal
+        showLicensesModal={showLicensesModal}
+        setShowLicensesModal={setShowLicensesModal}
       />
 
     </div>

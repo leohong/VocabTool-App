@@ -76,3 +76,15 @@
 關於更詳細的聽讀特訓機制（盲聽、逐字拼讀高亮）、手滑強制重寫邏輯、CORS WebView 建置原因及各模組詳細依賴關係，請參閱根目錄的：
 *   **技術手冊**：[DEVELOPMENT_GUIDE.md](file:///d:/MyProjects/VocabTool-App/DEVELOPMENT_GUIDE.md)
 
+---
+
+## 7. Token 消耗與環境優化鐵律 (Token Optimization Guidelines)
+為了防止 AI Agent 對話因 Context 膨脹而耗盡 Token 或響應遲緩，開發與編譯時必須嚴格遵守以下準則：
+1. **編譯輸出限流 (Quiet Build Output)**：
+   - 執行 Gradle 編譯指令（如 `.\gradlew.bat assembleDebug`）時，一律加上 `-q` (Quiet) 參數或重新導向輸出至檔案（例如 `> build.log`），**嚴禁**將數萬行的完整 Gradle 編譯日誌直接輸出到終端機。
+2. **精準檔案操作 (Precise File Operations)**：
+   - 除非必要，否則**關鍵修改**一律使用 `replace_file_content` 做局部代碼塊的精準修改，**禁止**重寫或讀取整支大檔案。
+3. **無用輸出屏蔽 (Suppress Verbose Output)**：
+   - 執行測試或搜尋時，過濾掉不必要的除錯輸出。僅在失敗時將錯誤資訊寫入暫存檔案或截圖，切勿大量 `print`。
+
+
