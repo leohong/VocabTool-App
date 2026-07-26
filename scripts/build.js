@@ -15,7 +15,6 @@ const files = [
   'www/js/components/sessions/ScanningSession.js',
   'www/js/components/sessions/SpellingSession.js',
   'www/js/components/sessions/SummarySession.js',
-  'www/js/components/Sessions.js',
   'www/js/components/AudioPlayer.js',
   'www/js/components/Modals.js',
   'www/js/components/modals/AudioSetupModal.js',

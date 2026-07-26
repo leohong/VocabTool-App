@@ -20,7 +20,8 @@ window.SpellingSession = ({
   handleSpellingSubmit,
   handleSurrender,
   handleForceMistake,
-  proceedToNext
+  proceedToNext,
+  isCorrectFeedback
 }) => {
   if (!currentWord) return null;
 
@@ -96,16 +97,19 @@ window.SpellingSession = ({
         <form onSubmit={handleSpellingSubmit} className="space-y-4 max-w-md mx-auto">
           <div className="flex justify-between items-center min-h-[24px]">
             <label className="text-xs text-slate-400 font-medium">拼寫單字：</label>
-            {typoCount === 1 && !mustTypeCorrectly && (
+            {isCorrectFeedback ? (
+              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-900/60 animate-bounce">
+                🎉 正確！
+              </span>
+            ) : typoCount === 1 && !mustTypeCorrectly ? (
               <span className="text-[10px] font-bold text-amber-400 bg-amber-950/40 px-2 py-0.5 rounded border border-amber-900/60 animate-pulse">
                 ⚠️ 手滑警告!
               </span>
-            )}
-            {mustTypeCorrectly && (
+            ) : mustTypeCorrectly ? (
               <span className="text-[10px] font-bold text-red-400 bg-red-950/40 px-2 py-0.5 rounded border border-red-900/60 animate-pulse">
                 ❌ 請重抄 (剩餘嘗試: {3 - copyFailCount} 次)
               </span>
-            )}
+            ) : null}
           </div>
 
           {mustTypeCorrectly && (
@@ -137,8 +141,10 @@ window.SpellingSession = ({
               currentWord.en.length <= 8 ? 'text-xl' :
               currentWord.en.length <= 12 ? 'text-lg' :
               currentWord.en.length <= 16 ? 'text-base' : 'text-sm'
-            } font-bold font-mono text-center transition-colors tracking-widest focus:outline-none ${
-              typoCount === 1
+            } font-bold font-mono text-center transition-all duration-150 tracking-widest focus:outline-none ${
+              isCorrectFeedback
+                ? 'border-emerald-400 text-emerald-300 bg-emerald-950/40 shadow-[0_0_20px_rgba(16,185,129,0.4)] scale-[1.01]'
+                : typoCount === 1
                 ? 'border-amber-500/50 text-amber-300'
                 : mustTypeCorrectly
                 ? 'border-emerald-500 text-emerald-300'
@@ -148,11 +154,15 @@ window.SpellingSession = ({
 
           <button
             type="submit"
-            className={`w-full py-3 font-bold rounded-xl transition-colors shadow-md text-white ${
-              mustTypeCorrectly ? 'bg-emerald-700 hover:bg-emerald-600' : 'bg-indigo-600 hover:bg-indigo-700'
+            className={`w-full py-3 font-bold rounded-xl transition-all duration-150 shadow-md text-white ${
+              isCorrectFeedback
+                ? 'bg-emerald-600 shadow-emerald-900/50 scale-[1.01]'
+                : mustTypeCorrectly
+                ? 'bg-emerald-700 hover:bg-emerald-600'
+                : 'bg-indigo-600 hover:bg-indigo-700'
             }`}
           >
-            {mustTypeCorrectly ? "已確實手寫記下 (Enter)" : "送出檢查 (Enter)"}
+            {isCorrectFeedback ? "🎉 正確！" : (mustTypeCorrectly ? "已確實手寫記下 (Enter)" : "送出檢查 (Enter)")}
           </button>
 
           {/* 誠實與放棄按鈕 */}

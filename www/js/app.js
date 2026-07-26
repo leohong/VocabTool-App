@@ -9,7 +9,7 @@ function App() {
   // ----------------------------------------
   // --- 0. 版本管理常數 (三碼版本號規則) ---
   // ----------------------------------------
-  const APP_VERSION = "1.7.3";
+  const APP_VERSION = "1.7.4";
   const DISPLAY_VERSION = APP_VERSION.split('.').slice(0, 2).join('.');
 
   // ----------------------------------------
@@ -118,6 +118,8 @@ function App() {
   const [typoCount, setTypoCount] = useState(0);
   const [mustTypeCorrectly, setMustTypeCorrectly] = useState(false);
   const [copyFailCount, setCopyFailCount] = useState(0);
+  const [isCorrectFeedback, setIsCorrectFeedback] = useState(false);
+  const correctTimerRef = useRef(null);
 
   const inputRef = useRef(null);
 
@@ -804,6 +806,8 @@ function App() {
     setTypoCount(0);
     setMustTypeCorrectly(false);
     setCopyFailCount(0);
+    if (correctTimerRef.current) clearTimeout(correctTimerRef.current);
+    setIsCorrectFeedback(false);
     setUserInput('');
     setView('spelling');
   };
@@ -818,6 +822,8 @@ function App() {
     setTypoCount(0);
     setMustTypeCorrectly(false);
     setCopyFailCount(0);
+    if (correctTimerRef.current) clearTimeout(correctTimerRef.current);
+    setIsCorrectFeedback(false);
     setUserInput('');
     setView('spelling');
   };
@@ -870,6 +876,8 @@ function App() {
       setTypoCount(0);
       setMustTypeCorrectly(false);
       setCopyFailCount(0);
+      if (correctTimerRef.current) clearTimeout(correctTimerRef.current);
+      setIsCorrectFeedback(false);
       setUserInput('');
       setView('spelling');
     } else {
@@ -908,6 +916,14 @@ function App() {
 
   const handleSpellingSubmit = (e) => {
     if (e) e.preventDefault();
+
+    if (isCorrectFeedback) {
+      if (correctTimerRef.current) clearTimeout(correctTimerRef.current);
+      setIsCorrectFeedback(false);
+      proceedToNext();
+      return;
+    }
+
     const cleanInput = cleanApostrophe(userInput);
     const cleanTarget = cleanApostrophe(currentWord.en);
     const isCorrect = cleanInput === cleanTarget;
@@ -915,50 +931,54 @@ function App() {
     if (isCorrect) {
       if (mustTypeCorrectly) {
         setCopyFailCount(0);
-        proceedToNext();
-        return;
+      } else {
+        setState(prev => {
+          const nextState = { ...prev };
+
+          if (prev.mistakes[currentWord.en]) {
+            const m = prev.mistakes[currentWord.en];
+            const newCorrect = (m.correctCount || 0) + 1;
+            const target = Math.min(m.mistakesCount * 2, 6);
+
+            if (newCorrect >= target) {
+              const newHistory = { ...prev.historicalMistakes };
+              newHistory[currentWord.en] = {
+                mistakesCount: m.mistakesCount,
+                totalFails: (newHistory[currentWord.en]?.totalFails || 0) + m.mistakesCount,
+                archivedDate: Date.now(),
+                step: 0, interval: 7, immune: false, data: currentWord
+              };
+              delete nextState.mistakes[currentWord.en];
+              nextState.historicalMistakes = newHistory;
+            } else {
+              nextState.mistakes = { ...prev.mistakes, [currentWord.en]: { ...m, correctCount: newCorrect } };
+            }
+          }
+
+          if (currentWord._isGhost) {
+            const intervals = [7, 21, 60, 180];
+            const h = currentWord._historyData;
+            const nextStep = (h.step || 0) + 1;
+            const newHistory = { ...nextState.historicalMistakes };
+
+            if (nextStep >= 4) {
+              newHistory[currentWord.en] = { ...h, immune: true };
+            } else {
+              newHistory[currentWord.en] = { ...h, step: nextStep, interval: intervals[nextStep], archivedDate: Date.now() };
+            }
+            nextState.historicalMistakes = newHistory;
+          }
+
+          return nextState;
+        });
       }
 
-      setState(prev => {
-        const nextState = { ...prev };
-
-        if (prev.mistakes[currentWord.en]) {
-          const m = prev.mistakes[currentWord.en];
-          const newCorrect = (m.correctCount || 0) + 1;
-          const target = Math.min(m.mistakesCount * 2, 6);
-
-          if (newCorrect >= target) {
-            const newHistory = { ...prev.historicalMistakes };
-            newHistory[currentWord.en] = {
-              mistakesCount: m.mistakesCount,
-              totalFails: (newHistory[currentWord.en]?.totalFails || 0) + m.mistakesCount,
-              archivedDate: Date.now(),
-              step: 0, interval: 7, immune: false, data: currentWord
-            };
-            delete nextState.mistakes[currentWord.en];
-            nextState.historicalMistakes = newHistory;
-          } else {
-            nextState.mistakes = { ...prev.mistakes, [currentWord.en]: { ...m, correctCount: newCorrect } };
-          }
-        }
-
-        if (currentWord._isGhost) {
-          const intervals = [7, 21, 60, 180];
-          const h = currentWord._historyData;
-          const nextStep = (h.step || 0) + 1;
-          const newHistory = { ...nextState.historicalMistakes };
-
-          if (nextStep >= 4) {
-            newHistory[currentWord.en] = { ...h, immune: true };
-          } else {
-            newHistory[currentWord.en] = { ...h, step: nextStep, interval: intervals[nextStep], archivedDate: Date.now() };
-          }
-          nextState.historicalMistakes = newHistory;
-        }
-
-        return nextState;
-      });
-      proceedToNext();
+      setIsCorrectFeedback(true);
+      if (correctTimerRef.current) clearTimeout(correctTimerRef.current);
+      correctTimerRef.current = setTimeout(() => {
+        setIsCorrectFeedback(false);
+        proceedToNext();
+      }, 180);
     } else {
       speak(currentWord.en);
       if (mustTypeCorrectly) {
@@ -990,11 +1010,13 @@ function App() {
   };
 
   const proceedToNext = () => {
+    if (correctTimerRef.current) clearTimeout(correctTimerRef.current);
     const newQueue = queue.slice(1);
     setTypoCount(0);
     setMustTypeCorrectly(false);
     setCopyFailCount(0);
     setUserInput('');
+    setIsCorrectFeedback(false);
     if (newQueue.length === 0) {
       if (sessionType === 'daily') {
         const todayStr = new Date().toDateString();
@@ -1844,6 +1866,7 @@ function App() {
             handleSurrender={handleSurrender}
             handleForceMistake={handleForceMistake}
             proceedToNext={proceedToNext}
+            isCorrectFeedback={isCorrectFeedback}
           />
         )}
 
