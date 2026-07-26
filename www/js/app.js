@@ -9,7 +9,7 @@ function App() {
   // ----------------------------------------
   // --- 0. 版本管理常數 (三碼版本號規則) ---
   // ----------------------------------------
-  const APP_VERSION = "1.7.2";
+  const APP_VERSION = "1.7.3";
   const DISPLAY_VERSION = APP_VERSION.split('.').slice(0, 2).join('.');
 
   // ----------------------------------------
@@ -1771,6 +1771,7 @@ function App() {
             setShowAudioSetupModal={setShowAudioSetupModal}
             setShowPreviewModal={setShowPreviewModal}
             setShowMistakeModal={setShowMistakeModal}
+            setShowHistoryModal={setShowHistoryModal}
             setShowAllPreviewModal={setShowAllPreviewModal}
             setAllSearchQuery={setAllSearchQuery}
             setAllPage={setAllPage}

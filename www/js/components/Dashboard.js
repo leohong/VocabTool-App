@@ -8,6 +8,7 @@ window.Dashboard = ({
   setShowAudioSetupModal,
   setShowPreviewModal,
   setShowMistakeModal,
+  setShowHistoryModal,
   setShowAllPreviewModal,
   setAllSearchQuery,
   setAllPage,
