@@ -22,7 +22,10 @@ allprojects {
         google()
         mavenCentral()
     }
-    // Allow Gradle to automatically resolve the correct Kotlin stdlib versions without forcing a downgrade.
+    configurations.all {
+        exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
+        exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
+    }
 }
 
 task clean(type: Delete) {
