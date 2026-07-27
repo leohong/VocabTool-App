@@ -227,16 +227,28 @@ function App() {
     loadConfig();
   }, []);
 
+  // 依模式與視圖產生獨立的暫存 Key (避免跨模式混用)
+  const getTempSessionKey = (db, type, v) => {
+    if (v === 'audio_player' || type === 'audio') return `vocab_tempSession_${db}_audio`;
+    if (type === 'exam') return `vocab_tempSession_${db}_exam`;
+    if (type === 'history') return `vocab_tempSession_${db}_history`;
+    return `vocab_tempSession_${db}_daily`;
+  };
+
   // --- 系統同步與續傳 (完全恢復離場狀態) ---
   useEffect(() => {
     if (!isStorageLoaded) return;
 
     async function checkTempSession() {
-      const tempSession = await window.persistentStorage.getSetting(`vocab_tempSession_${dbName}`, null);
+      let key = `vocab_tempSession_${dbName}_daily`;
+      let tempSession = await window.persistentStorage.getSetting(key, null);
+      if (!tempSession) {
+        tempSession = await window.persistentStorage.getSetting(`vocab_tempSession_${dbName}`, null);
+      }
       if (tempSession) {
         const parsed = tempSession;
         if (parsed.queue && parsed.queue.length > 0 && parsed.date === new Date().toDateString()) {
-          if (window.confirm("偵測到今日尚未完成的特訓進度，是否繼續？（選擇取消將放棄該次進度）")) {
+          if (window.confirm("偵測到「今日特訓」尚未完成的進度，是否繼續？（選擇取消將放棄該次進度）")) {
             setSessionType(parsed.sessionType || 'daily');
             setCurrentSessionWords(parsed.currentSessionWords || []);
             setQueue(parsed.queue);
@@ -251,16 +263,10 @@ function App() {
               }
             }
 
-            if (parsed.audioState) {
-              if (parsed.audioState.audioQueue) setAudioQueue(parsed.audioState.audioQueue);
-              if (typeof parsed.audioState.currentAudioIndex === 'number') setCurrentAudioIndex(parsed.audioState.currentAudioIndex);
-              if (parsed.audioState.audioSource) setAudioSource(parsed.audioState.audioSource);
-              if (parsed.audioState.audioRange) setAudioRange(parsed.audioState.audioRange);
-            }
-
             setCurrentWord(parsed.queue[0]);
             setView(parsed.view);
           } else {
+            await window.persistentStorage.setSetting(key, null);
             await window.persistentStorage.setSetting(`vocab_tempSession_${dbName}`, null);
           }
         }
@@ -281,11 +287,12 @@ function App() {
     }
   }, [speechEnabled, isStorageLoaded]);
 
-  // 自動暫存 (包含拼寫細節狀態與聽音播放狀態，配合背景化手勢快照)
+  // 自動暫存 (依模式獨立寫入各自的 tempSession Key)
   useEffect(() => {
     if (!isStorageLoaded) return;
 
     async function handleTempSession() {
+      const key = getTempSessionKey(dbName, sessionType, view);
       if (view !== 'dashboard' && view !== 'summary') {
         const sessionData = {
           date: new Date().toDateString(),
@@ -307,9 +314,9 @@ function App() {
             audioRange
           }
         };
-        await window.persistentStorage.setSetting(`vocab_tempSession_${dbName}`, sessionData);
+        await window.persistentStorage.setSetting(key, sessionData);
       } else if (view === 'summary') {
-        await window.persistentStorage.setSetting(`vocab_tempSession_${dbName}`, null);
+        await window.persistentStorage.setSetting(key, null);
       }
     }
 
@@ -569,7 +576,7 @@ function App() {
     });
   };
 
-  const stopAudio = () => {
+  const stopAudio = async () => {
     setIsAudioPlaying(false);
     releaseWakeLock();
     if (abortControllerRef.current) {
@@ -587,6 +594,7 @@ function App() {
     setAudioStatusText('已停止');
     setAudioSubStep('none');
     setActiveSpellingChar(-1);
+    await window.persistentStorage.setSetting(`vocab_tempSession_${dbName}_audio`, null);
     setView('dashboard');
   };
 
@@ -832,10 +840,13 @@ function App() {
   };
 
   const startTodaySession = async () => {
-    const tempSession = await window.persistentStorage.getSetting(`vocab_tempSession_${dbName}`, null);
+    const key = `vocab_tempSession_${dbName}_daily`;
+    let tempSession = await window.persistentStorage.getSetting(key, null);
+    if (!tempSession) tempSession = await window.persistentStorage.getSetting(`vocab_tempSession_${dbName}`, null);
+
     if (tempSession && tempSession.queue && tempSession.queue.length > 0 && tempSession.date === new Date().toDateString()) {
-      if (window.confirm("偵測到您有暫停存檔的特訓進度，是否繼續從上次暫停的地方開始？\n（選擇「取消」將放棄暫存進度並重新開始）")) {
-        setSessionType(tempSession.sessionType || 'daily');
+      if (window.confirm(`偵測到您有暫停存檔的「今日特訓」進度 (剩餘 ${tempSession.queue.length} 字)，是否繼續從上次暫停的地方開始？\n（選擇「取消」將放棄暫存進度並重新開始）`)) {
+        setSessionType('daily');
         setCurrentSessionWords(tempSession.currentSessionWords || []);
         setQueue(tempSession.queue);
         if (tempSession.spellingState) {
@@ -847,16 +858,11 @@ function App() {
             tempSession.queue[0]._hasCountedMistake = true;
           }
         }
-        if (tempSession.audioState) {
-          if (tempSession.audioState.audioQueue) setAudioQueue(tempSession.audioState.audioQueue);
-          if (typeof tempSession.audioState.currentAudioIndex === 'number') setCurrentAudioIndex(tempSession.audioState.currentAudioIndex);
-          if (tempSession.audioState.audioSource) setAudioSource(tempSession.audioState.audioSource);
-          if (tempSession.audioState.audioRange) setAudioRange(tempSession.audioState.audioRange);
-        }
         setCurrentWord(tempSession.queue[0]);
         setView(tempSession.view || 'scanning');
         return;
       } else {
+        await window.persistentStorage.setSetting(key, null);
         await window.persistentStorage.setSetting(`vocab_tempSession_${dbName}`, null);
       }
     }
@@ -874,7 +880,28 @@ function App() {
     setView('scanning');
   };
 
-  const startExamSession = () => {
+  const startExamSession = async () => {
+    const key = `vocab_tempSession_${dbName}_exam`;
+    const tempSession = await window.persistentStorage.getSetting(key, null);
+    if (tempSession && tempSession.queue && tempSession.queue.length > 0 && tempSession.date === new Date().toDateString()) {
+      if (window.confirm(`偵測到您有暫停存檔的「錯題大會考」進度 (剩餘 ${tempSession.queue.length} 字)，是否繼續從上次暫停的地方開始？\n（選擇「取消」將放棄暫存進度並重新開始）`)) {
+        setSessionType('exam');
+        setCurrentSessionWords(tempSession.currentSessionWords || []);
+        setQueue(tempSession.queue);
+        if (tempSession.spellingState) {
+          setUserInput(tempSession.spellingState.userInput || '');
+          setTypoCount(tempSession.spellingState.typoCount || 0);
+          setMustTypeCorrectly(!!tempSession.spellingState.mustTypeCorrectly);
+          setCopyFailCount(tempSession.spellingState.copyFailCount || 0);
+        }
+        setCurrentWord(tempSession.queue[0]);
+        setView(tempSession.view || 'spelling');
+        return;
+      } else {
+        await window.persistentStorage.setSetting(key, null);
+      }
+    }
+
     if (mistakesTotal === 0) return alert("錯題庫目前完美清空，無需降溫大會考！🎉");
     const shuffled = [...activeMistakesList].sort(() => 0.5 - Math.random()).slice(0, 50).map(m => ({ ...m.data, _hasCountedMistake: false }));
     setSessionType('exam');
@@ -890,7 +917,28 @@ function App() {
     setView('spelling');
   };
 
-  const startHistoryCheck = () => {
+  const startHistoryCheck = async () => {
+    const key = `vocab_tempSession_${dbName}_history`;
+    const tempSession = await window.persistentStorage.getSetting(key, null);
+    if (tempSession && tempSession.queue && tempSession.queue.length > 0 && tempSession.date === new Date().toDateString()) {
+      if (window.confirm(`偵測到您有暫停存檔的「歷史隨機抽查」進度 (剩餘 ${tempSession.queue.length} 字)，是否繼續從上次暫停的地方開始？\n（選擇「取消」將放棄暫存進度並重新開始）`)) {
+        setSessionType('history');
+        setCurrentSessionWords(tempSession.currentSessionWords || []);
+        setQueue(tempSession.queue);
+        if (tempSession.spellingState) {
+          setUserInput(tempSession.spellingState.userInput || '');
+          setTypoCount(tempSession.spellingState.typoCount || 0);
+          setMustTypeCorrectly(!!tempSession.spellingState.mustTypeCorrectly);
+          setCopyFailCount(tempSession.spellingState.copyFailCount || 0);
+        }
+        setCurrentWord(tempSession.queue[0]);
+        setView(tempSession.view || 'spelling');
+        return;
+      } else {
+        await window.persistentStorage.setSetting(key, null);
+      }
+    }
+
     if (historyTotal === 0) return alert("歷史殿堂目前為空，請先完成日常錯題的雙倍消除！");
     const shuffled = Object.values(historicalMistakes).sort(() => 0.5 - Math.random()).slice(0, 50).map(h => ({ ...h.data, _hasCountedMistake: false, _isHistoryCheck: true, _historyData: h }));
     setSessionType('history');
@@ -904,6 +952,26 @@ function App() {
     setIsCorrectFeedback(false);
     setUserInput('');
     setView('spelling');
+  };
+
+  const handleAudioSetupClick = async () => {
+    const key = `vocab_tempSession_${dbName}_audio`;
+    const tempSession = await window.persistentStorage.getSetting(key, null);
+    if (tempSession && tempSession.audioState && tempSession.audioState.audioQueue && tempSession.audioState.audioQueue.length > 0 && tempSession.date === new Date().toDateString()) {
+      const currentIdx = tempSession.audioState.currentAudioIndex || 0;
+      const total = tempSession.audioState.audioQueue.length;
+      if (window.confirm(`偵測到您有暫停的「聽音背單字」進度 (第 ${currentIdx + 1}/${total} 字)，是否繼續播放？\n（選擇「取消」將開啟新聽音設定）`)) {
+        setAudioQueue(tempSession.audioState.audioQueue);
+        setCurrentAudioIndex(currentIdx);
+        if (tempSession.audioState.audioSource) setAudioSource(tempSession.audioState.audioSource);
+        if (tempSession.audioState.audioRange) setAudioRange(tempSession.audioState.audioRange);
+        setView('audio_player');
+        return;
+      } else {
+        await window.persistentStorage.setSetting(key, null);
+      }
+    }
+    setShowAudioSetupModal(true);
   };
 
   const punishWord = (wordObj) => {
@@ -1105,6 +1173,7 @@ function App() {
 
   const handleExitSession = async () => {
     if (window.confirm("確定要暫停離開嗎？系統已為您存檔。")) {
+      const key = getTempSessionKey(dbName, sessionType, view);
       const sessionData = {
         date: new Date().toDateString(),
         view,
@@ -1125,7 +1194,7 @@ function App() {
           audioRange
         }
       };
-      await window.persistentStorage.setSetting(`vocab_tempSession_${dbName}`, sessionData);
+      await window.persistentStorage.setSetting(key, sessionData);
       setView('dashboard');
     }
   };
@@ -1877,7 +1946,7 @@ function App() {
             startTodaySession={startTodaySession}
             startExamSession={startExamSession}
             startHistoryCheck={startHistoryCheck}
-            setShowAudioSetupModal={setShowAudioSetupModal}
+            setShowAudioSetupModal={handleAudioSetupClick}
             setShowPreviewModal={setShowPreviewModal}
             setShowMistakeModal={setShowMistakeModal}
             setShowHistoryModal={setShowHistoryModal}
