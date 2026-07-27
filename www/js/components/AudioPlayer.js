@@ -32,7 +32,7 @@ window.AudioPlayer = ({
           onClick={stopAudio}
           className="text-xs px-3 py-1.5 bg-slate-800 hover:bg-red-950/40 text-slate-400 hover:text-red-400 rounded-xl border border-slate-700 transition-colors shrink-0 whitespace-nowrap"
         >
-          🛑 停止並返回
+          離開
         </button>
       </div>
 

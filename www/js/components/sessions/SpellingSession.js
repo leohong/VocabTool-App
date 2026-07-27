@@ -4,6 +4,7 @@
 window.SpellingSession = ({
   queue,
   currentWord,
+  sessionType,
   handleExitSession,
   speak,
   startEditing,
@@ -35,7 +36,7 @@ window.SpellingSession = ({
           onClick={handleExitSession}
           className="text-xs px-3 py-1.5 bg-slate-800 hover:bg-red-950/40 text-slate-400 hover:text-red-400 rounded-lg border border-slate-700 transition-colors shrink-0 whitespace-nowrap"
         >
-          暫停存檔
+          {sessionType === 'daily' ? '暫停存檔' : '離開'}
         </button>
       </div>
 
