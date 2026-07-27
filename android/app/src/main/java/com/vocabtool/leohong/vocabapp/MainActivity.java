@@ -1,4 +1,4 @@
-package com.vocabtool.app;
+package com.vocabtool.leohong.vocabapp;
 
 import android.os.Bundle;
 import android.webkit.WebSettings;

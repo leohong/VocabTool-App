@@ -21,9 +21,11 @@ android/local.properties
 .DS_Store
 Thumbs.db
 
-# Build artifacts / APKs
+# Build artifacts / APKs / Keystores
 *.apk
 *.aab
+*.jks
+*.keystore
 screenshots/
 
 # AI Agent & Workspace Artifacts
