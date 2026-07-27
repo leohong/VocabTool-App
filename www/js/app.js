@@ -227,11 +227,11 @@ function App() {
     loadConfig();
   }, []);
 
-  // 依模式與視圖產生獨立的暫存 Key (避免跨模式混用)
+  // 依模式與視圖產生獨立的暫存 Key (避免跨模式混用；歷史隨機抽查取消暫存)
   const getTempSessionKey = (db, type, v) => {
+    if (type === 'history') return null;
     if (v === 'audio_player' || type === 'audio') return `vocab_tempSession_${db}_audio`;
     if (type === 'exam') return `vocab_tempSession_${db}_exam`;
-    if (type === 'history') return `vocab_tempSession_${db}_history`;
     return `vocab_tempSession_${db}_daily`;
   };
 
@@ -247,6 +247,15 @@ function App() {
       }
       if (tempSession) {
         const parsed = tempSession;
+        // 比對字庫類別與特訓類型，不同類別則忽略啟動
+        if (parsed.dbName && parsed.dbName !== dbName) {
+          console.log(`[TempSession] Skip auto-resume due to dbName mismatch (${parsed.dbName} vs ${dbName})`);
+          return;
+        }
+        if (parsed.sessionType && parsed.sessionType !== 'daily') {
+          console.log(`[TempSession] Skip auto-resume due to sessionType mismatch (${parsed.sessionType})`);
+          return;
+        }
         if (parsed.queue && parsed.queue.length > 0 && parsed.date === new Date().toDateString()) {
           if (window.confirm("偵測到「今日特訓」尚未完成的進度，是否繼續？（選擇取消將放棄該次進度）")) {
             setSessionType(parsed.sessionType || 'daily');
@@ -287,17 +296,20 @@ function App() {
     }
   }, [speechEnabled, isStorageLoaded]);
 
-  // 自動暫存 (依模式獨立寫入各自的 tempSession Key)
+  // 自動暫存 (依模式獨立寫入各自的 tempSession Key，寫入 dbName；歷史隨機抽查不備份)
   useEffect(() => {
     if (!isStorageLoaded) return;
 
     async function handleTempSession() {
       const key = getTempSessionKey(dbName, sessionType, view);
+      if (!key) return; // 歷史隨機抽查 key 為 null，不寫入暫存
+
       if (view !== 'dashboard' && view !== 'summary') {
         const sessionData = {
           date: new Date().toDateString(),
           view,
           sessionType,
+          dbName, // 寫入字庫類別，方便復原時比對
           queue,
           currentSessionWords,
           spellingState: {
@@ -845,7 +857,12 @@ function App() {
     if (!tempSession) tempSession = await window.persistentStorage.getSetting(`vocab_tempSession_${dbName}`, null);
 
     if (tempSession && tempSession.queue && tempSession.queue.length > 0 && tempSession.date === new Date().toDateString()) {
-      if (window.confirm(`偵測到您有暫停存檔的「今日特訓」進度 (剩餘 ${tempSession.queue.length} 字)，是否繼續從上次暫停的地方開始？\n（選擇「取消」將放棄暫存進度並重新開始）`)) {
+      // 比對字庫類別與特訓類型，不相符時放棄該暫存不啟動
+      if ((tempSession.dbName && tempSession.dbName !== dbName) || (tempSession.sessionType && tempSession.sessionType !== 'daily')) {
+        console.log(`[TempSession] Skip today session resume: mismatch (dbName: ${tempSession.dbName} vs ${dbName}, type: ${tempSession.sessionType})`);
+        await window.persistentStorage.setSetting(key, null);
+        await window.persistentStorage.setSetting(`vocab_tempSession_${dbName}`, null);
+      } else if (window.confirm(`偵測到您有暫停存檔的「今日特訓」進度 (剩餘 ${tempSession.queue.length} 字)，是否繼續從上次暫停的地方開始？\n（選擇「取消」將放棄暫存進度並重新開始）`)) {
         setSessionType('daily');
         setCurrentSessionWords(tempSession.currentSessionWords || []);
         setQueue(tempSession.queue);
@@ -884,7 +901,11 @@ function App() {
     const key = `vocab_tempSession_${dbName}_exam`;
     const tempSession = await window.persistentStorage.getSetting(key, null);
     if (tempSession && tempSession.queue && tempSession.queue.length > 0 && tempSession.date === new Date().toDateString()) {
-      if (window.confirm(`偵測到您有暫停存檔的「錯題大會考」進度 (剩餘 ${tempSession.queue.length} 字)，是否繼續從上次暫停的地方開始？\n（選擇「取消」將放棄暫存進度並重新開始）`)) {
+      // 比對字庫類別與特訓類型，不相符時放棄該暫存不啟動
+      if ((tempSession.dbName && tempSession.dbName !== dbName) || (tempSession.sessionType && tempSession.sessionType !== 'exam')) {
+        console.log(`[TempSession] Skip exam session resume: mismatch (dbName: ${tempSession.dbName} vs ${dbName}, type: ${tempSession.sessionType})`);
+        await window.persistentStorage.setSetting(key, null);
+      } else if (window.confirm(`偵測到您有暫停存檔的「錯題大會考」進度 (剩餘 ${tempSession.queue.length} 字)，是否繼續從上次暫停的地方開始？\n（選擇「取消」將放棄暫存進度並重新開始）`)) {
         setSessionType('exam');
         setCurrentSessionWords(tempSession.currentSessionWords || []);
         setQueue(tempSession.queue);
@@ -918,26 +939,9 @@ function App() {
   };
 
   const startHistoryCheck = async () => {
+    // 歷史隨機抽查取消記憶與暫存恢復功能，每次皆清理舊暫存並重新抽查全新 50 字
     const key = `vocab_tempSession_${dbName}_history`;
-    const tempSession = await window.persistentStorage.getSetting(key, null);
-    if (tempSession && tempSession.queue && tempSession.queue.length > 0 && tempSession.date === new Date().toDateString()) {
-      if (window.confirm(`偵測到您有暫停存檔的「歷史隨機抽查」進度 (剩餘 ${tempSession.queue.length} 字)，是否繼續從上次暫停的地方開始？\n（選擇「取消」將放棄暫存進度並重新開始）`)) {
-        setSessionType('history');
-        setCurrentSessionWords(tempSession.currentSessionWords || []);
-        setQueue(tempSession.queue);
-        if (tempSession.spellingState) {
-          setUserInput(tempSession.spellingState.userInput || '');
-          setTypoCount(tempSession.spellingState.typoCount || 0);
-          setMustTypeCorrectly(!!tempSession.spellingState.mustTypeCorrectly);
-          setCopyFailCount(tempSession.spellingState.copyFailCount || 0);
-        }
-        setCurrentWord(tempSession.queue[0]);
-        setView(tempSession.view || 'spelling');
-        return;
-      } else {
-        await window.persistentStorage.setSetting(key, null);
-      }
-    }
+    await window.persistentStorage.setSetting(key, null);
 
     if (historyTotal === 0) return alert("歷史殿堂目前為空，請先完成日常錯題的雙倍消除！");
     const shuffled = Object.values(historicalMistakes).sort(() => 0.5 - Math.random()).slice(0, 50).map(h => ({ ...h.data, _hasCountedMistake: false, _isHistoryCheck: true, _historyData: h }));
@@ -958,17 +962,23 @@ function App() {
     const key = `vocab_tempSession_${dbName}_audio`;
     const tempSession = await window.persistentStorage.getSetting(key, null);
     if (tempSession && tempSession.audioState && tempSession.audioState.audioQueue && tempSession.audioState.audioQueue.length > 0 && tempSession.date === new Date().toDateString()) {
-      const currentIdx = tempSession.audioState.currentAudioIndex || 0;
-      const total = tempSession.audioState.audioQueue.length;
-      if (window.confirm(`偵測到您有暫停的「聽音背單字」進度 (第 ${currentIdx + 1}/${total} 字)，是否繼續播放？\n（選擇「取消」將開啟新聽音設定）`)) {
-        setAudioQueue(tempSession.audioState.audioQueue);
-        setCurrentAudioIndex(currentIdx);
-        if (tempSession.audioState.audioSource) setAudioSource(tempSession.audioState.audioSource);
-        if (tempSession.audioState.audioRange) setAudioRange(tempSession.audioState.audioRange);
-        setView('audio_player');
-        return;
-      } else {
+      // 比對字庫類別，不相符時放棄該暫存，直接進入設定
+      if (tempSession.dbName && tempSession.dbName !== dbName) {
+        console.log(`[TempSession] Skip audio session resume: dbName mismatch (${tempSession.dbName} vs ${dbName})`);
         await window.persistentStorage.setSetting(key, null);
+      } else {
+        const currentIdx = tempSession.audioState.currentAudioIndex || 0;
+        const total = tempSession.audioState.audioQueue.length;
+        if (window.confirm(`偵測到您有暫停的「聽音背單字」進度 (第 ${currentIdx + 1}/${total} 字)，是否繼續播放？\n（選擇「取消」將開啟新聽音設定）`)) {
+          setAudioQueue(tempSession.audioState.audioQueue);
+          setCurrentAudioIndex(currentIdx);
+          if (tempSession.audioState.audioSource) setAudioSource(tempSession.audioState.audioSource);
+          if (tempSession.audioState.audioRange) setAudioRange(tempSession.audioState.audioRange);
+          setView('audio_player');
+          return;
+        } else {
+          await window.persistentStorage.setSetting(key, null);
+        }
       }
     }
     setShowAudioSetupModal(true);

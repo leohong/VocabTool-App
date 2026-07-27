@@ -1,6 +1,6 @@
 {
   "name": "vocabtool-app",
-  "version": "1.7.6",
+  "version": "1.7.7",
   "description": "極限單字特訓系統 Mobile App",
   "private": true,
   "scripts": {

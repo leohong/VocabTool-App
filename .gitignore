@@ -30,6 +30,8 @@ screenshots/
 .artifacts/
 .agents/*
 !.agents/AGENTS.md
+!.agents/AI_AGENT_TOKEN_SAVER.md
+!.agents/DEVELOPMENT_GUIDE.md
 tmp/
 temp/
 *.log

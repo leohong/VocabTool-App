@@ -1,6 +1,6 @@
 # 🤖 VocabTool-App AI Agent Workspace Instructions & Knowledge
 
-本文件記錄 `VocabTool-App` 專案的核心開發規範、架構決策與運作流程。在任何電腦開開啟本專案時，AI Agent 均會自動載入本規範以維持無縫工作接續。
+本文件記錄 `VocabTool-App` 專案的核心開發規範、架構決策與運作流程。**在每次開啟新 Session / 對話時，AI Agent 均必須自動確認、讀取並嚴格遵守本規範與 `.agents/` 資料夾內的所有指引項目**。
 
 ---
 
@@ -75,10 +75,11 @@
 
 ---
 
-## 6. 完整技術手冊 (Full Documentation)
+## 6. 完整技術與 Token 指引手冊 (Full Documentation & Token Saver)
 
-關於更詳細的聽讀特訓機制（盲聽、逐字拼讀高亮）、手滑強制重寫邏輯、CORS WebView 建置原因及各模組詳細依賴關係，請參閱根目錄的：
-*   **技術手冊**：[DEVELOPMENT_GUIDE.md](file:///d:/MyProjects/VocabTool-App/DEVELOPMENT_GUIDE.md)
+關於更詳細的聽讀特訓機制（盲聽、逐字拼讀高亮）、手滑強制重寫邏輯、CORS WebView 建置原因、各模組詳細依賴關係及 Token 節省技巧，請參閱 `.agents/` 目錄：
+*   **技術手冊**：[DEVELOPMENT_GUIDE.md](file:///e:/ProjectCode/VocabTool-App/.agents/DEVELOPMENT_GUIDE.md)
+*   **Token 節省指南**：[AI_AGENT_TOKEN_SAVER.md](file:///e:/ProjectCode/VocabTool-App/.agents/AI_AGENT_TOKEN_SAVER.md)
 
 ---
 
