@@ -1,0 +1,58 @@
+Error: Message: <unknown>: Failed to read the 'localStorage' property from 'Window': Access is denied for this document.
+  (Session info: chrome=150.0.7871.184)
+Stacktrace:
+	chromedriver!GetHandleVerifier [0x7ff75e810d25+155a5]
+	chromedriver!GetHandleVerifier [0x7ff75e810d80+15600]
+	chromedriver!(No symbol) [0x7ff75e36594d]
+	chromedriver!(No symbol) [0x7ff75e36d8c1]
+	chromedriver!(No symbol) [0x7ff75e370c1f]
+	chromedriver!(No symbol) [0x7ff75e40f292]
+	chromedriver!(No symbol) [0x7ff75e3e91ca]
+	chromedriver!(No symbol) [0x7ff75e40e01b]
+	chromedriver!(No symbol) [0x7ff75e3b2e6c]
+	chromedriver!(No symbol) [0x7ff75e3b3d93]
+	chromedriver!GetHandleVerifier [0x7ff75edf6431+5facb1]
+	chromedriver!GetHandleVerifier [0x7ff75edf0a9b+5f531b]
+	chromedriver!GetHandleVerifier [0x7ff75ee15865+61a0e5]
+	chromedriver!GetHandleVerifier [0x7ff75e82dace+3234e]
+	chromedriver!GetHandleVerifier [0x7ff75e83661c+3ae9c]
+	chromedriver!GetHandleVerifier [0x7ff75e81ab74+1f3f4]
+	chromedriver!GetHandleVerifier [0x7ff75e81ad04+1f584]
+	chromedriver!GetHandleVerifier [0x7ff75e7fd9d7+2257]
+	KERNEL32!BaseThreadInitThunk [0x7ff8f6e4e957+17]
+	ntdll!RtlUserThreadStart [0x7ff8f7eead6c+2c]
+
+Traceback (most recent call last):
+  File "E:\ProjectCode\VocabTool-App\test\test_audio_player.py", line 42, in run_tests
+    driver.execute_script(mock_setup_script)
+  File "C:\Users\hys82\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\remote\webdriver.py", line 551, in execute_script
+    return self.execute(command, {"script": script, "args": converted_args})["value"]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hys82\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\remote\webdriver.py", line 454, in execute
+    self.error_handler.check_response(response)
+  File "C:\Users\hys82\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\remote\errorhandler.py", line 232, in check_response
+    raise exception_class(message, screen, stacktrace)
+selenium.common.exceptions.WebDriverException: Message: <unknown>: Failed to read the 'localStorage' property from 'Window': Access is denied for this document.
+  (Session info: chrome=150.0.7871.184)
+Stacktrace:
+	chromedriver!GetHandleVerifier [0x7ff75e810d25+155a5]
+	chromedriver!GetHandleVerifier [0x7ff75e810d80+15600]
+	chromedriver!(No symbol) [0x7ff75e36594d]
+	chromedriver!(No symbol) [0x7ff75e36d8c1]
+	chromedriver!(No symbol) [0x7ff75e370c1f]
+	chromedriver!(No symbol) [0x7ff75e40f292]
+	chromedriver!(No symbol) [0x7ff75e3e91ca]
+	chromedriver!(No symbol) [0x7ff75e40e01b]
+	chromedriver!(No symbol) [0x7ff75e3b2e6c]
+	chromedriver!(No symbol) [0x7ff75e3b3d93]
+	chromedriver!GetHandleVerifier [0x7ff75edf6431+5facb1]
+	chromedriver!GetHandleVerifier [0x7ff75edf0a9b+5f531b]
+	chromedriver!GetHandleVerifier [0x7ff75ee15865+61a0e5]
+	chromedriver!GetHandleVerifier [0x7ff75e82dace+3234e]
+	chromedriver!GetHandleVerifier [0x7ff75e83661c+3ae9c]
+	chromedriver!GetHandleVerifier [0x7ff75e81ab74+1f3f4]
+	chromedriver!GetHandleVerifier [0x7ff75e81ad04+1f584]
+	chromedriver!GetHandleVerifier [0x7ff75e7fd9d7+2257]
+	KERNEL32!BaseThreadInitThunk [0x7ff8f6e4e957+17]
+	ntdll!RtlUserThreadStart [0x7ff8f7eead6c+2c]
+

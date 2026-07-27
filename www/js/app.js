@@ -9,7 +9,7 @@ function App() {
   // ----------------------------------------
   // --- 0. 版本管理常數 (三碼版本號規則) ---
   // ----------------------------------------
-  const APP_VERSION = "1.7.5";
+  const APP_VERSION = "1.7.6";
   const DISPLAY_VERSION = APP_VERSION.split('.').slice(0, 2).join('.');
 
   // ----------------------------------------
@@ -227,7 +227,7 @@ function App() {
     loadConfig();
   }, []);
 
-  // --- 系統同步與續傳 ---
+  // --- 系統同步與續傳 (完全恢復離場狀態) ---
   useEffect(() => {
     if (!isStorageLoaded) return;
 
@@ -237,9 +237,27 @@ function App() {
         const parsed = tempSession;
         if (parsed.queue && parsed.queue.length > 0 && parsed.date === new Date().toDateString()) {
           if (window.confirm("偵測到今日尚未完成的特訓進度，是否繼續？（選擇取消將放棄該次進度）")) {
-            setSessionType(parsed.sessionType);
-            setCurrentSessionWords(parsed.currentSessionWords);
+            setSessionType(parsed.sessionType || 'daily');
+            setCurrentSessionWords(parsed.currentSessionWords || []);
             setQueue(parsed.queue);
+
+            if (parsed.spellingState) {
+              setUserInput(parsed.spellingState.userInput || '');
+              setTypoCount(parsed.spellingState.typoCount || 0);
+              setMustTypeCorrectly(!!parsed.spellingState.mustTypeCorrectly);
+              setCopyFailCount(parsed.spellingState.copyFailCount || 0);
+              if (parsed.queue[0] && parsed.spellingState.currentWordHasCountedMistake) {
+                parsed.queue[0]._hasCountedMistake = true;
+              }
+            }
+
+            if (parsed.audioState) {
+              if (parsed.audioState.audioQueue) setAudioQueue(parsed.audioState.audioQueue);
+              if (typeof parsed.audioState.currentAudioIndex === 'number') setCurrentAudioIndex(parsed.audioState.currentAudioIndex);
+              if (parsed.audioState.audioSource) setAudioSource(parsed.audioState.audioSource);
+              if (parsed.audioState.audioRange) setAudioRange(parsed.audioState.audioRange);
+            }
+
             setCurrentWord(parsed.queue[0]);
             setView(parsed.view);
           } else {
@@ -263,20 +281,51 @@ function App() {
     }
   }, [speechEnabled, isStorageLoaded]);
 
-  // 自動暫存
+  // 自動暫存 (包含拼寫細節狀態與聽音播放狀態，配合背景化手勢快照)
   useEffect(() => {
     if (!isStorageLoaded) return;
 
     async function handleTempSession() {
       if (view !== 'dashboard' && view !== 'summary') {
-        const sessionData = { queue, currentSessionWords, sessionType, view, date: new Date().toDateString() };
+        const sessionData = {
+          date: new Date().toDateString(),
+          view,
+          sessionType,
+          queue,
+          currentSessionWords,
+          spellingState: {
+            userInput,
+            typoCount,
+            mustTypeCorrectly,
+            copyFailCount,
+            currentWordHasCountedMistake: currentWord?._hasCountedMistake || false
+          },
+          audioState: {
+            currentAudioIndex,
+            audioQueue,
+            audioSource,
+            audioRange
+          }
+        };
         await window.persistentStorage.setSetting(`vocab_tempSession_${dbName}`, sessionData);
       } else if (view === 'summary') {
         await window.persistentStorage.setSetting(`vocab_tempSession_${dbName}`, null);
       }
     }
+
     handleTempSession();
-  }, [queue, view, sessionType, dbName, currentSessionWords, isStorageLoaded]);
+
+    // App 切換至背景時（visibilitychange）強制作快照備份
+    const handleVisibilityChange = () => {
+      if (document.hidden && view !== 'dashboard' && view !== 'summary') {
+        handleTempSession();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [queue, view, sessionType, dbName, currentSessionWords, userInput, typoCount, mustTypeCorrectly, copyFailCount, currentWord, currentAudioIndex, audioQueue, audioSource, audioRange, isStorageLoaded]);
 
   // Helper to get Capacitor native Text-to-Speech plugin if available
   const getTtsPlugin = () => {
@@ -886,31 +935,17 @@ function App() {
     }
   };
 
-  // 觸控手勢
+  // 鍵盤操作監聽 (已移除觸控左右劃動，開放自由放大縮放與文字選取)
   useEffect(() => {
-    let touchStartX = 0, touchStartY = 0;
     const handleKeyDown = (e) => {
       if (view === 'scanning' && currentWord) {
         if (e.key === 'ArrowLeft') handleScan(false);
         if (e.key === 'ArrowRight') handleScan(true);
       }
     };
-    const handleTouchStart = (e) => { if (view === 'scanning') { touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; } };
-    const handleTouchEnd = (e) => {
-      if (view !== 'scanning') return;
-      const diffX = e.changedTouches[0].clientX - touchStartX;
-      const diffY = e.changedTouches[0].clientY - touchStartY;
-      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
-        if (diffX > 0) handleScan(true); else handleScan(false);
-      }
-    };
     window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('touchstart', handleTouchStart, { passive: true });
-    window.addEventListener('touchend', handleTouchEnd, { passive: true });
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchend', handleTouchEnd);
     };
   }, [view, currentWord, queue]);
 

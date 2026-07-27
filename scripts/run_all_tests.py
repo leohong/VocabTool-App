@@ -4,8 +4,11 @@ import sys
 import json
 
 def run_tests():
-    web_test_dir = r'd:\MyProjects\VocabTool\test'
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    web_test_dir = os.path.abspath(os.path.join(BASE_DIR, "..", "test"))
     test_files = [
+        'test_complete_system.py',
+        'test_persistence.py',
         'test_import_options_modal.py',
         'test_import_dictionary.py',
         'test_delete_word.py',

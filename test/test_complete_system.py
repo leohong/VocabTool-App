@@ -12,7 +12,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-DIRECTORY = "www"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DIRECTORY = os.path.abspath(os.path.join(BASE_DIR, "..", "www"))
 httpd = None
 PORT = None
 
@@ -199,7 +200,7 @@ try:
     submit_btn.click()
     time.sleep(1.5)
 
-    is_copy = driver.execute_script("return document.body.innerText.includes('失憶')")
+    is_copy = driver.execute_script("return document.body.innerText.includes('請重抄') || document.body.innerText.includes('手寫記下')")
     assert is_copy, "Force copy penalty not displayed!"
     driver.save_screenshot(os.path.join(screenshot_dir, "system_verify_spelling_copy.png"))
     print("[Step 4] Force-copy penalty modal displays correctly.")

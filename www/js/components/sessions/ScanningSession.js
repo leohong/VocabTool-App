@@ -32,7 +32,7 @@ window.ScanningSession = ({
         </button>
       </div>
 
-      <div className="bg-slate-800 w-full min-h-[320px] rounded-3xl shadow-2xl border border-slate-700 flex flex-col items-center justify-center p-6 pt-14 md:p-8 md:pt-16 mb-8 text-center relative touch-none select-none">
+      <div className="bg-slate-800 w-full min-h-[320px] rounded-3xl shadow-2xl border border-slate-700 flex flex-col items-center justify-center p-6 pt-14 md:p-8 md:pt-16 mb-8 text-center relative">
         <div className="absolute top-6 right-6 flex gap-2 z-10">
           <button
             type="button"
@@ -97,18 +97,18 @@ window.ScanningSession = ({
       </div>
 
       <div className="w-full grid grid-cols-2 gap-4">
-        {/* UI左右對調：左滑不熟，右滑認識 */}
+        {/* 操作按鈕：不熟與認識 */}
         <button
           onClick={() => handleScan(false)}
           className="py-5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-400 rounded-2xl font-bold text-xl flex flex-col items-center gap-2 border border-rose-800/60"
         >
-          <IconX />不熟 (左滑)
+          <IconX />不熟
         </button>
         <button
           onClick={() => handleScan(true)}
           className="py-5 bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-400 rounded-2xl font-bold text-xl flex flex-col items-center gap-2 border border-emerald-800/60"
         >
-          <IconCheck />認識 (右滑)
+          <IconCheck />認識
         </button>
       </div>
     </div>
