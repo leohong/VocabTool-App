@@ -30,6 +30,8 @@ window.Dashboard = ({
   setSpeechRate,
   speechEnabled,
   setSpeechEnabled,
+  scanMode,
+  setScanMode,
   exportDictionaryTXT,
   setShowImportOptionsModal,
   exportHistoryTXT,
@@ -228,6 +230,36 @@ window.Dashboard = ({
           >
             {speechEnabled ? '已開啟 ON' : '已關閉 OFF'}
           </button>
+        </div>
+        <div className="h-px bg-slate-700/50 my-1"></div>
+        <div className="flex justify-between items-center gap-2">
+          <span className="text-xs font-bold text-slate-400 flex items-center gap-1">
+            ⚡ 特訓模式:
+          </span>
+          <div className="flex bg-slate-900 p-0.5 rounded-lg border border-slate-700 select-none shrink-0">
+            <button
+              type="button"
+              onClick={() => setScanMode('flashcard')}
+              className={`px-2 py-1 text-xs font-bold rounded transition-all ${
+                scanMode !== 'mcq'
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              🎴 閃卡
+            </button>
+            <button
+              type="button"
+              onClick={() => setScanMode('mcq')}
+              className={`px-2 py-1 text-xs font-bold rounded transition-all ${
+                scanMode === 'mcq'
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              🔘 4選1
+            </button>
+          </div>
         </div>
       </div>
 

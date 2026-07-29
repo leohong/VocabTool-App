@@ -49,6 +49,7 @@ function App() {
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [speechRate, setSpeechRate] = useState(0.8);
   const [speechEnabled, setSpeechEnabled] = useState(true);
+  const [scanMode, setScanMode] = useState('flashcard');
 
   const [view, setView] = useState('dashboard');
   const [showMistakeModal, setShowMistakeModal] = useState(false);
@@ -198,6 +199,9 @@ function App() {
       const savedEnabled = await window.persistentStorage.getSetting('vocab_speechEnabled', true);
       setSpeechEnabled(savedEnabled);
 
+      const savedScanMode = await window.persistentStorage.getSetting('vocab_scanMode', 'flashcard');
+      setScanMode(savedScanMode === 'mcq' ? 'mcq' : 'flashcard');
+
       const savedAudio = await window.persistentStorage.getSetting('vocab_audioSettings', null);
       const defaultSettings = {
         repeats: 2,
@@ -244,6 +248,12 @@ function App() {
       window.persistentStorage.setSetting('vocab_speechEnabled', speechEnabled);
     }
   }, [speechEnabled, isStorageLoaded]);
+
+  useEffect(() => {
+    if (isStorageLoaded) {
+      window.persistentStorage.setSetting('vocab_scanMode', scanMode);
+    }
+  }, [scanMode, isStorageLoaded]);
 
   // 自動暫存 (僅「今日特訓」寫入 vocab_tempSession_${dbName}_daily)
   useEffect(() => {
@@ -863,7 +873,7 @@ function App() {
     if (correctTimerRef.current) clearTimeout(correctTimerRef.current);
     setIsCorrectFeedback(false);
     setUserInput('');
-    setView('spelling');
+    setView(scanMode === 'mcq' ? 'scanning' : 'spelling');
   };
 
   const startHistoryCheck = async () => {
@@ -883,7 +893,7 @@ function App() {
     if (correctTimerRef.current) clearTimeout(correctTimerRef.current);
     setIsCorrectFeedback(false);
     setUserInput('');
-    setView('spelling');
+    setView(scanMode === 'mcq' ? 'scanning' : 'spelling');
   };
 
   const handleAudioSetupClick = async () => {
@@ -1880,6 +1890,8 @@ function App() {
             setSpeechRate={setSpeechRate}
             speechEnabled={speechEnabled}
             setSpeechEnabled={setSpeechEnabled}
+            scanMode={scanMode}
+            setScanMode={setScanMode}
             exportDictionaryTXT={exportDictionaryTXT}
             setShowImportOptionsModal={setShowImportOptionsModal}
             exportHistoryTXT={exportHistoryTXT}
@@ -1897,6 +1909,7 @@ function App() {
             queue={queue}
             currentWord={currentWord}
             sessionType={sessionType}
+            scanMode={scanMode}
             handleExitSession={handleExitSession}
             setIsDictHintMode={setIsDictHintMode}
             setDictMaskWord={setDictMaskWord}
@@ -1907,6 +1920,8 @@ function App() {
             startEditing={startEditing}
             handleDeleteWord={handleDeleteWord}
             vocabList={vocabList}
+            activeMistakesList={activeMistakesList}
+            historicalMistakes={historicalMistakes}
             handleScan={handleScan}
           />
         )}

@@ -54,8 +54,14 @@
 3. **🏷️ 語意化版本控制與發布進版時機 (SemVer & Release Workflow)**：
    * **本地開發測試期**：進行功能開發、重構或 Bug 修復時，**版本號保持不動**，專注於程式碼修改與測試，切勿在本地微調時隨意遞增版號。
    * **正式發布 / Git Push 階段**：當功能測試完成、使用者明確指示準備 Git Push 或發布正式版時，方可一次性統一遞增版本號。
-   * **進版同步檔案**：主變更 (MAJOR)、功能增刪 (MINOR)、Bug 修復 (PATCH) 與 Android `versionCode` (單調遞增) 必須同步修改於 `app.js`、`build.gradle` 與 `package.json`，並與 Git Tag 保持 100% 一致。需求規格文件如 `SPECIFICATION.md` 僅在系統規格本身有實質變動時方可修改。
+   * **進版同步檔案**：主變更 (MAJOR)、功能增刪 (MINOR)、Bug 修復 (PATCH) 與 Android `versionCode` (單調遞增) 必須同步修改於 `app.js`、`build.gradle` 與 `package.json`，並與 Git Tag 保持 100% 一致。說明書 (`README.md`) 與規格書 (`SPECIFICATION.md`) 有修改後，當需要更新到雲端時，內標註的文件版本號必須始終與 App 版本號完全一致（如 App 版本為 1.7.9，則文件版本亦標註為 1.7.9）。
 4. **💡 先說明原因再進行動作**：收到使用者回報的問題、警告或異常時，務必先向使用者清楚說明發生的根本原因 (Root Cause) 與預計的修復對策，確認思路後再執行相應的檔案修改與指令操作。
+5. **📖 說明書與規格書職責分流原則**：
+   * `README.md` 僅作為純粹的使用者操作手冊（專注於功能介紹、按鈕選單、鍵盤操作與 TTS 發音障礙排除）。
+   * `SPECIFICATION.md` 為權威技術規格書（收錄系統架構、Schema、正規化備份規格、防禦機制、演算法、建置與 OTA 流水線）。
+6. **🌐 數據正規化與指標完整性鐵律**：
+   * 進行備份與狀態瘦身時，僅剝離重複嵌入的 `data` 物件，必須 100% 完整保留 `archivedDate`, `step`, `interval`, `immune`, `totalFails`, `mistakesCount`, `correctCount` 等所有特訓冷卻規格指標。
+   * 還原解析時若錯題單字已自字典中被刪除，採方案 A 自動過濾清理孤兒錯題，保證關卡與歷史殿堂出題乾淨。
 
 ---
 
