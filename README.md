@@ -4,65 +4,35 @@
 
 📦 **最新 Android APK 下載**：[GitHub Releases 最新發佈頁面](https://github.com/leohong/VocabTool-App/releases/latest)  
 🔗 **GitHub 儲存庫網址**：[https://github.com/leohong/VocabTool-App](https://github.com/leohong/VocabTool-App)  
-📚 **內建字庫檔案**：[國中 2000 單字庫](./www/2000_單字庫.txt) | [高中 7000 單字庫](./www/7000_單字庫.txt)
+📚 **內建字庫檔案**：[國中 2000 單字庫](./www/2000_單字庫.txt) | [高中 7000 單字庫](./www/7000_單字庫.txt)  
+📖 **開發者與技術規格書**：[SPECIFICATION.md](./SPECIFICATION.md)
 
 ---
 
-## 📱 專案簡介 (Overview)
+## 📱 產品簡介 (Overview)
 
-**極限單字特訓系統 Mobile App** 專為高強度的長期單字記憶計畫（如征服國中 2,000 單字、高中 7,000 單字）而設計。
+**極限單字特訓系統 Mobile App** 專為高強度的長期單字記憶計畫（如征服國中 2,000 單字、高中 7,000 單字）而設計，核心特色包括：
 
-本專案結合 **Capacitor 跨平台原生框架** 與 **React 18 高效能純前端架構**，具備以下優勢：
 * ⚡ **雙階段流水線訓練**：第一關快速閃卡篩選 ➔ 第二關強制盲測全拼寫。
-* 📱 **原生行動端優化**：支援左右滑動手勢卡片篩選、防螢幕休眠鎖定 (Wake Lock)。
+* 📱 **行動端優化體驗**：支援左右滑動手勢卡片篩選、防螢幕休眠鎖定 (Wake Lock)。
 * 🔥 **動態錯題懲罰**：雙倍消除演算法（拼錯越多次需要連續拼對越多次才能畢業）。
 * 🏛️ **間隔重複與幽靈突襲**：4 階段間隔複習（7天 ➔ 21天 ➔ 60天 ➔ 180天 ➔ 永久免疫）。
-* 🎧 **盲聽特訓播放器**：預設美式發音與台灣國語，支援自訂語速、字母拼讀停頓、聽寫高亮動畫與遮蔽模式。
-* ☁️ **雙軌雲端同步 (v1.5.0)**：支援 Google 帳號授權同步 (Google Drive AppData) 與 Firebase 自訂金鑰備份還原。
-* 📦 **模組化程式碼結構**：全新重構的代碼，將核心拆分為模組與 Hooks，使開發架構更易讀好維護。
-* 💾 **100% 離線可用與原生持久化儲存**：所有偏好設定與設定值儲存於 `@capacitor/preferences` 原生偏好設定，大型字庫與學習進度寫入 `@capacitor/filesystem` 原生沙盒實體 JSON 檔案，防止系統因快取清理而清空資料。
-* ⚡ **自託管熱更新 (OTA v1.6.2)**：整合 Capgo，未來更新網頁資源免重新商店審查、免 Mac 編譯，開機自動背景秒級更新。
+* 🎧 **盲聽特訓播放器**：美式發音與台灣國語，支援自訂語速、字母拼讀停頓、聽寫高亮動畫與遮蔽模式。
+* 💾 **100% 離線可用與極速備份**：資料本機持久化儲存，支援手動 JSON 全系統備份與 TXT 匯出入，100% 離線可用。
 
 ---
 
-## 🚀 如何開始與 APK 打包 (Getting Started & Build)
+## 📲 安裝與開啟方式 (Installation & Usage)
 
-### 📲 方式一：直接安裝 APK (最快)
 1. 前往 **[GitHub Releases 最新發佈頁面](https://github.com/leohong/VocabTool-App/releases/latest)** 下載最新版 APK。
 2. 傳送至 Android 手機並允許「安裝未知來源應用程式」即可開啟使用。
-
-### 💻 方式二：使用 Node.js / Capacitor 在本機開發或打包
-1. **複製專案並安裝依賴**：
-   ```bash
-   git clone https://github.com/leohong/VocabTool-App.git
-   cd VocabTool-App
-   npm install
-   ```
-
-2. **開發與預編譯模組**：
-   專案代碼採模組化拆分，置於 `www/js/` 目錄中。在同步至原生 App 或開啟 index.html 之前，必須進行編譯打包：
-   ```bash
-   # 預編譯打包 JavaScript 模組合併至 www/index.html
-   npm run build
-   ```
-
-3. **同步前端程式至 Android 原生專案**：
-   ```bash
-   npx cap sync android
-   ```
-
-4. **開啟 Android Studio 編譯並執行**：
-   ```bash
-   npx cap open android
-   ```
-   * 在 Android Studio 中點選 **Run 'app'** 即可於模擬器或實體手機上執行與測試。
-   * 或點選 **Build ➔ Build Bundle(s) / APK(s) ➔ Build APK(s)** 即可產出全新 APK。
+3. 若習慣在 Web 瀏覽器使用，也可直接開啟網頁版使用。
 
 ---
 
-## 🎮 主介面與操作指南
+## 🎮 主介面與操作指南 (User Guide)
 
-### 1. 指揮中心按鈕
+### 1. 指揮中心按鈕功能
 * **⚡ 發動今日特訓**：開始當天設定的新單字特訓。特訓中會自動安插今日到期的歷史「幽靈單字 👻」進行突襲。
 * **🔥 降溫：錯題大會考**：從當前錯題集中隨機抽取最多 50 個字進行純拼寫盲測，幫助快速消除錯題債務。
 * **🏛️ 深度：歷史隨機抽查**：隨機抽取最多 50 個已封存於歷史殿堂的單字進行純拼寫抽驗，主動檢測長期記憶。
@@ -71,7 +41,7 @@
 * **🗂️ 預覽全字庫單字**：關鍵字即時模糊篩選、分頁瀏覽、即時編輯與刪除單字。
 * **📖 查字典與新增單字**：整合線上英語字典與翻譯 API，查詢後可手動新增至字庫。
 
-### 2. 檔案管理與備份
+### 2. 備份與檔案管理
 * **`⬇️ 字` / `⬆️ 字`**：匯出與匯入純單字庫 TXT 檔。
 * **`⬇️ 殿` / `⬆️ 殿`**：匯出與匯入歷史殿堂 TXT 檔。
 * **`⬇️ J` / `⬆️ J`**：全系統 JSON 完整備份與還原。
@@ -90,10 +60,9 @@
 
 ---
 
-## 📚 資料匯入格式 (Data Formats)
+## 📚 資料匯入 TXT 格式範例
 
-### 📝 字典 TXT 格式範例：
-必須包含 `=== 特訓完整字庫 ===` 開頭，單字格式為 `編號. [詞性] 英文 --> 中文`，可用 `||` 追加例句：
+自訂單字庫匯入時，必須包含 `=== 特訓完整字庫 ===` 開頭，單字格式為 `編號. [詞性] 英文 --> 中文`，可用 `||` 追加例句：
 
 ```text
 === 特訓完整字庫 ===
@@ -105,49 +74,14 @@
 
 ---
 
-## 🛠 技術棧 (Tech Stack)
-
-* **跨平台框架**：Capacitor 7 (`@capacitor/core`, `@capacitor/android`)
-* **前端框架**：React 18 (via CDN / Standalone)
-* **CSS 樣式**：Tailwind CSS (Glassmorphism 暗黑科技風格)
-* **語音引擎**：`@capacitor-community/text-to-speech` 原生 TTS 發音，支援美式英語與自訂速率。
-* **本地存儲**：Preferences 原生偏好設定 + Filesystem 沙盒檔案儲存 (Web 版自動 Promise 降級降落為 `localStorage` 備用)。
-
----
-
-## ⚡ 自託管熱更新發布指南 (OTA Release Guide)
-
-本專案配置有 Capgo 自託管熱更新。若未來您修改了 `www/` 中的 JS/CSS/Layout 等網頁內容，不需重新打包 APK，依照以下步驟發布更新：
-
-1.  **打包壓縮網頁檔**：
-    在專案根目錄執行 Node.js 打包腳本：
-    ```powershell
-    node scripts/zip_www.js
-    ```
-    這會自動在 `dist/` 目錄下生成 `www.zip`。
-2.  **上傳至 GitHub Release**：
-    在 GitHub 建立一個新 Release（例如版號為 `v1.6.3`），並將 `dist/www.zip` 作為附件上傳。
-3.  **修改版本號設定檔**：
-    修改專案根目錄的 `update.json`：
-    ```json
-    {
-      "version": "1.6.3",
-      "url": "https://github.com/leohong/VocabTool-App/releases/download/v1.6.3/www.zip"
-    }
-    ```
-4.  **推送至 GitHub**：
-    執行 `git push` 把 `update.json` 推上 GitHub。使用者在下次開啟 App 時即會偵測到新版並自動完成熱更新！
-
----
-
 ## 💡 常見問題與語音障礙排除 (FAQ & TTS Troubleshooting)
 
-### 🔊 為什麼安裝 APK 後點擊播放英文，卻沒有聲音或發音很生硬？
-因為本 App 依賴 Android 系統內建的語音引擎 (TTS)。如果您的手機是精簡版系統（如陸版 ROM），可能會缺少 Google 語音引擎。
+### 🔊 為什麼點擊播放英文，卻沒有聲音或發音很生硬？
+本 App 依賴系統內建的語音引擎 (TTS)。如果您的手機是精簡版系統（如陸版 ROM），可能會缺少 Google 語音引擎。  
 **解決方法**：
-1. 前往手機的「設定」➔「語言與輸入設定」➔「文字轉語音 (TTS) 輸出」。
+1. 前往手機「設定」➔「語言與輸入設定」➔「文字轉語音 (TTS) 輸出」。
 2. 確認首選引擎已設定為 **「Google 語音服務 (Speech Services by Google)」**（若無此選項，請至 Google Play 商店搜尋並安裝）。
-3. 下載並安裝「英文 (美國)」的語音資料包，即可享受最自然的美式朗讀。
+3. 下載並安裝「英文 (美國)」語音資料包，即可享受自然的美式朗讀。
 
 ---
 
