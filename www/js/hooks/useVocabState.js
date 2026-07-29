@@ -46,8 +46,17 @@ window.useVocabState = () => {
     try {
       await window.persistentStorage.initStorage();
       
-      const currentDB = await window.persistentStorage.getSetting('vocab_currentDB', 'vocab_2000');
-      const savedDbList = await window.persistentStorage.getDbList();
+      let savedDbList = await window.persistentStorage.getDbList();
+      if (!savedDbList || !Array.isArray(savedDbList) || savedDbList.length === 0) {
+        savedDbList = ['vocab_2000', 'vocab_7000'];
+        await window.persistentStorage.saveDbList(savedDbList);
+      }
+
+      let currentDB = await window.persistentStorage.getSetting('vocab_currentDB', 'vocab_2000');
+      if (!savedDbList.includes(currentDB)) {
+        currentDB = savedDbList[0] || 'vocab_2000';
+        await window.persistentStorage.setSetting('vocab_currentDB', currentDB);
+      }
       
       setDbName(currentDB);
       setDbList(savedDbList);

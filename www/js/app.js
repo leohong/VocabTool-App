@@ -1606,28 +1606,23 @@ function App() {
 
       const updatedList = dbList.filter(name => name !== dbName);
       let nextDb;
-      let isNewCustom = false;
+      let isFirstLaunchRestored = false;
 
       if (updatedList.length > 0) {
         nextDb = updatedList[0];
       } else {
-        const defaultCustomDb = 'custom_vocab';
-        updatedList.push(defaultCustomDb);
-        nextDb = defaultCustomDb;
-        isNewCustom = true;
-        await window.persistentStorage.saveDatabase(defaultCustomDb, []);
-        await window.persistentStorage.saveDbState(defaultCustomDb, defaultState);
+        const defaultInitialDbList = ['vocab_2000', 'vocab_7000'];
+        updatedList.push(...defaultInitialDbList);
+        nextDb = 'vocab_2000';
+        isFirstLaunchRestored = true;
       }
 
       setDbList(updatedList);
       await window.persistentStorage.saveDbList(updatedList);
       await window.persistentStorage.setSetting('vocab_currentDB', nextDb);
 
-      if (isNewCustom) {
-        setDbName(nextDb);
-        setVocabList([]);
-        setState(defaultState);
-        alert(`已徹底刪除字庫【${dbName}】。\n目前所有字庫已清空，系統已自動為您建立並切換至全新空白自訂資料庫【${nextDb}】！`);
+      if (isFirstLaunchRestored) {
+        alert(`已徹底刪除字庫【${dbName}】。\n目前所有字庫已清空，系統已自動執行第一次啟動初始化，復原預設範例字庫【vocab_2000】與【vocab_7000】！`);
       } else {
         alert(`已徹底刪除字庫【${dbName}】。已自動切換至資料庫：${nextDb}`);
       }
