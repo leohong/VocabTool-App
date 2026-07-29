@@ -1570,15 +1570,26 @@ function App() {
     e.target.value = "";
   };
 
-  const handleAddDB = () => {
-    const newName = window.prompt("請輸入全新資料庫代碼 (僅限英文與數字):");
+  const handleAddDB = async () => {
+    const newName = window.prompt("請輸入全新自訂資料庫名稱/代碼 (僅限英文與數字):");
     if (newName && newName.trim()) {
       const cleaned = newName.replace(/[^a-zA-Z0-9_]/g, '');
-      if (cleaned && !dbList.includes(cleaned)) {
-        const updated = [...dbList, cleaned];
-        setDbList(updated);
+      if (cleaned) {
+        let updated = [...dbList];
+        if (!updated.includes(cleaned)) {
+          updated.push(cleaned);
+          setDbList(updated);
+          await window.persistentStorage.saveDbList(updated);
+        }
+        await window.persistentStorage.saveDatabase(cleaned, []);
+        await window.persistentStorage.saveDbState(cleaned, defaultState);
+        await window.persistentStorage.setSetting('vocab_currentDB', cleaned);
+
+        setDbName(cleaned);
+        setVocabList([]);
+        setState(defaultState);
+        alert(`已成功建立並切換至全新自訂資料庫【${cleaned}】！\n您可以在字典管理中點擊「+ 新增單字」手動輸入，或點擊「⬆️ 匯入」載入單字。`);
       }
-      if (cleaned) setDbName(cleaned);
     }
   };
 
@@ -1594,14 +1605,32 @@ function App() {
       await window.persistentStorage.setSetting(`vocab_tempSession_${dbName}`, null);
 
       const updatedList = dbList.filter(name => name !== dbName);
-      const finalDbList = updatedList.length > 0 ? updatedList : ['vocab_2000'];
-      setDbList(finalDbList);
-      await window.persistentStorage.saveDbList(finalDbList);
+      let nextDb;
+      let isNewCustom = false;
 
-      const nextDb = finalDbList[0];
+      if (updatedList.length > 0) {
+        nextDb = updatedList[0];
+      } else {
+        const defaultCustomDb = 'custom_vocab';
+        updatedList.push(defaultCustomDb);
+        nextDb = defaultCustomDb;
+        isNewCustom = true;
+        await window.persistentStorage.saveDatabase(defaultCustomDb, []);
+        await window.persistentStorage.saveDbState(defaultCustomDb, defaultState);
+      }
+
+      setDbList(updatedList);
+      await window.persistentStorage.saveDbList(updatedList);
       await window.persistentStorage.setSetting('vocab_currentDB', nextDb);
 
-      alert(`已刪除字庫【${dbName}】。`);
+      if (isNewCustom) {
+        setDbName(nextDb);
+        setVocabList([]);
+        setState(defaultState);
+        alert(`已徹底刪除字庫【${dbName}】。\n目前所有字庫已清空，系統已自動為您建立並切換至全新空白自訂資料庫【${nextDb}】！`);
+      } else {
+        alert(`已徹底刪除字庫【${dbName}】。已自動切換至資料庫：${nextDb}`);
+      }
       window.location.reload();
     }
   };
