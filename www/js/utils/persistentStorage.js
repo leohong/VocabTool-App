@@ -74,6 +74,21 @@
       }
     },
 
+    // 刪除一般偏好設定 (Settings)
+    async removeSetting(key) {
+      try {
+        if (isNative && Preferences) {
+          await Preferences.remove({ key: key });
+        } else {
+          localStorage.removeItem(key);
+        }
+        return true;
+      } catch (err) {
+        console.error(`[Storage] removeSetting failed for key ${key}:`, err);
+        return false;
+      }
+    },
+
     // 讀取特定字庫的單字列表 (Database)
     async loadDatabase(dbName) {
       const fileKey = `vocab_data_${dbName}.json`;

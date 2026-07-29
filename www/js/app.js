@@ -1181,13 +1181,13 @@ function App() {
   };
 
   const exportJson = async () => {
-    const allDatabases = {};
+    const allDatabasesData = {};
     for (const db of dbList) {
       const vocab = await window.persistentStorage.loadDatabase(db);
       const st = await window.persistentStorage.loadDbState(db);
       const wpd = await window.persistentStorage.getSetting(`vocab_wordsPerDay_${db}`, null);
       const gpd = await window.persistentStorage.getSetting(`vocab_ghostsPerDay_${db}`, null);
-      allDatabases[db] = {
+      allDatabasesData[db] = {
         vocabList: vocab && vocab.length > 0 ? vocab : null,
         state: st,
         wordsPerDay: wpd,
@@ -1195,23 +1195,12 @@ function App() {
       };
     }
 
-    const backup = {
-      version: "2.0",
-      backupType: "full_system",
-      exportDate: new Date().toISOString(),
-      global: {
-        dbList,
-        currentDB: dbName,
-        speechRate,
-        speechEnabled
-      },
-      dbName,
-      state,
-      vocabList,
-      wordsPerDay,
-      ghostsPerDay,
-      allDatabases
-    };
+    const backup = window.exportImportUtils.buildNormalizedBackup(allDatabasesData, {
+      currentDB: dbName,
+      dbList,
+      speechRate,
+      speechEnabled
+    });
 
     const now = new Date();
     const timeStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
@@ -1224,45 +1213,42 @@ function App() {
     const reader = new FileReader();
     reader.onload = async (event) => {
       try {
-        const data = JSON.parse(event.target.result);
+        const rawObj = JSON.parse(event.target.result);
+        const rawVocabMap = { vocab_2000: rawVocab, vocab_7000: rawVocab7000 };
+        const parsed = window.exportImportUtils.parseUniversalBackup(rawObj, rawVocabMap);
 
-        if (Array.isArray(data)) {
-          if (data.length > 0 && (data[0].en || data[0].word) && (data[0].zh || data[0].meaning)) {
-            if (window.confirm(`偵測到此檔案為「單字清單格式」（共 ${data.length} 字）。\n\n是否將其匯入為目前字庫【${dbName}】的完整字庫？\n(這將會覆蓋目前字庫的單字，但保留您的學習紀錄與錯題)`)) {
-              const imported = data.map(item => ({
-                en: (item.en || item.word || '').trim(),
-                zh: (item.zh || item.meaning || '').trim(),
-                pos: (item.pos || 'n.').trim(),
-                eg: (item.eg || item.example || '').trim()
-              })).filter(item => item.en && item.zh);
-
-              if (imported.length > 0) {
-                setVocabList(imported);
-                await window.persistentStorage.saveDatabase(dbName, imported);
-                alert(`單字清單匯入成功！共載入 ${imported.length} 個單字。`);
-              } else {
-                alert(`匯入失敗，未找到有效的英文與中文欄位。`);
-              }
-              return;
-            }
+        if (parsed.type === 'word_list') {
+          if (window.confirm(`偵測到此檔案為「單字清單格式」（共 ${parsed.vocabList.length} 字）。\n\n是否將其匯入為目前字庫【${dbName}】的完整字庫？\n(這將會覆蓋目前字庫的單字，但保留您的學習紀錄與錯題)`)) {
+            setVocabList(parsed.vocabList);
+            await window.persistentStorage.saveDatabase(dbName, parsed.vocabList);
+            // 防禦 4: 重置關卡頁面至 dashboard
+            setSessionStage('dashboard');
+            alert(`單字清單匯入成功！共載入 ${parsed.vocabList.length} 個單字。`);
           }
+          return;
         }
 
-        if (data && data.backupType === "full_system" && data.allDatabases) {
-          if (window.confirm(`偵測到此檔案為「系統完整備份檔案」（包含全部 ${data.global?.dbList?.length || 0} 個字庫及其學習進度與設定）。\n\n注意：這將會完全覆蓋您目前瀏覽器的所有字庫與學習進度！\n確定要繼續還原嗎？`)) {
-            const backupGlobal = data.global || {};
-            const importedDbList = backupGlobal.dbList || ['vocab_2000', 'vocab_7000'];
-            const importedCurrentDB = backupGlobal.currentDB || 'vocab_2000';
-            const importedSpeechRate = backupGlobal.speechRate || 0.8;
-            const importedSpeechEnabled = backupGlobal.speechEnabled !== undefined ? backupGlobal.speechEnabled : true;
+        if (parsed.type === 'full_system') {
+          const dbCount = Object.keys(parsed.databases || {}).length;
+          if (window.confirm(`偵測到此檔案為「系統完整備份檔案」（包含全部 ${dbCount} 個字庫及其學習進度與設定）。\n\n注意：這將會完全覆蓋您目前瀏覽器的所有字庫與學習進度！\n確定要繼續還原嗎？`)) {
+            const { dbList: newDbList, currentDB: newCurrentDB, speechRate: newSpeechRate, speechEnabled: newSpeechEnabled } = parsed.globalSettings;
 
-            await window.persistentStorage.saveDbList(importedDbList);
-            await window.persistentStorage.setSetting('vocab_currentDB', importedCurrentDB);
-            await window.persistentStorage.setSetting('vocab_speechRate', importedSpeechRate);
-            await window.persistentStorage.setSetting('vocab_speechEnabled', importedSpeechEnabled);
+            // 防禦 2: 殭屍字庫檔案清理 (Zombie DB Cleanup)
+            const oldDbList = await window.persistentStorage.getDbList();
+            for (const oldDb of oldDbList) {
+              if (!newDbList.includes(oldDb)) {
+                await window.persistentStorage.deleteDatabaseFiles(oldDb);
+                await window.persistentStorage.removeSetting(`vocab_wordsPerDay_${oldDb}`);
+                await window.persistentStorage.removeSetting(`vocab_ghostsPerDay_${oldDb}`);
+              }
+            }
 
-            for (const db of Object.keys(data.allDatabases)) {
-              const dbData = data.allDatabases[db];
+            await window.persistentStorage.saveDbList(newDbList);
+            await window.persistentStorage.setSetting('vocab_currentDB', newCurrentDB);
+            await window.persistentStorage.setSetting('vocab_speechRate', newSpeechRate);
+            await window.persistentStorage.setSetting('vocab_speechEnabled', newSpeechEnabled);
+
+            for (const [db, dbData] of Object.entries(parsed.databases)) {
               if (dbData.vocabList) await window.persistentStorage.saveDatabase(db, dbData.vocabList);
               if (dbData.state) await window.persistentStorage.saveDbState(db, dbData.state);
               if (dbData.wordsPerDay !== null && dbData.wordsPerDay !== undefined) {
@@ -1273,59 +1259,63 @@ function App() {
               }
             }
 
-            setDbList(importedDbList);
-            setSpeechRate(importedSpeechRate);
-            setSpeechEnabled(importedSpeechEnabled);
-            setDbName(importedCurrentDB);
+            setDbList(newDbList);
+            setSpeechRate(newSpeechRate);
+            setSpeechEnabled(newSpeechEnabled);
+            setDbName(newCurrentDB);
 
-            if (dbName === importedCurrentDB) {
-              const savedState = await window.persistentStorage.loadDbState(importedCurrentDB);
-              setState(savedState ? savedState : defaultState);
-              const savedVocab = await window.persistentStorage.loadDatabase(importedCurrentDB);
-              setVocabList(savedVocab && savedVocab.length > 0 ? savedVocab : rawVocab);
-              const savedWords = await window.persistentStorage.getSetting(`vocab_wordsPerDay_${importedCurrentDB}`, 50);
-              setWordsPerDay(savedWords);
-              const savedGhosts = await window.persistentStorage.getSetting(`vocab_ghostsPerDay_${importedCurrentDB}`, 10);
-              setGhostsPerDay(savedGhosts);
-            }
+            const activeDbData = parsed.databases[newCurrentDB] || {};
+            const savedState = activeDbData.state || defaultState;
+            const savedVocab = activeDbData.vocabList || (newCurrentDB === 'vocab_7000' ? rawVocab7000 : rawVocab);
+            const savedWords = activeDbData.wordsPerDay || 50;
+            const savedGhosts = activeDbData.ghostsPerDay || 10;
 
-            alert(`系統完整還原成功！已成功載入 ${importedDbList.length} 個字庫，並切換至：${importedCurrentDB}`);
+            setState(savedState);
+            setVocabList(savedVocab);
+            setWordsPerDay(savedWords);
+            setGhostsPerDay(savedGhosts);
+
+            // 防禦 4: 特訓關卡進行中安全重置 (Active Session Safety)
+            setSessionStage('dashboard');
+
+            alert(`系統完整還原成功！已成功載入 ${newDbList.length} 個字庫，並切換至：${newCurrentDB}`);
             return;
           }
+          return;
         }
 
-        if (data && data.state) {
-          const importedDbName = data.dbName || dbName || 'vocab_2000';
-          let importedState = { ...defaultState, ...data.state };
-
-          if (!importedState.historicalMistakes) importedState.historicalMistakes = {};
-
+        if (parsed.type === 'single_db') {
+          const targetDb = parsed.dbName;
           let currentDbList = [...dbList];
-          if (!currentDbList.includes(importedDbName)) {
-            currentDbList.push(importedDbName);
+          if (!currentDbList.includes(targetDb)) {
+            currentDbList.push(targetDb);
             setDbList(currentDbList);
             await window.persistentStorage.saveDbList(currentDbList);
           }
 
-          await window.persistentStorage.setSetting('vocab_currentDB', importedDbName);
-          await window.persistentStorage.saveDbState(importedDbName, importedState);
-          await window.persistentStorage.saveDatabase(importedDbName, data.vocabList || data.customVocab || rawVocab);
-          await window.persistentStorage.setSetting(`vocab_wordsPerDay_${importedDbName}`, data.wordsPerDay || 50);
-          await window.persistentStorage.setSetting(`vocab_ghostsPerDay_${importedDbName}`, data.ghostsPerDay || 10);
+          await window.persistentStorage.setSetting('vocab_currentDB', targetDb);
+          await window.persistentStorage.saveDbState(targetDb, parsed.state);
+          await window.persistentStorage.saveDatabase(targetDb, parsed.vocabList);
+          await window.persistentStorage.setSetting(`vocab_wordsPerDay_${targetDb}`, parsed.wordsPerDay);
+          await window.persistentStorage.setSetting(`vocab_ghostsPerDay_${targetDb}`, parsed.ghostsPerDay);
 
-          setDbName(importedDbName);
-          setState(importedState);
-          setVocabList(data.vocabList || data.customVocab || rawVocab);
-          setWordsPerDay(data.wordsPerDay || 50);
-          setGhostsPerDay(data.ghostsPerDay || 10);
-          alert(`成功覆蓋還原單一字庫！已切換至資料庫：${importedDbName}`);
+          setDbName(targetDb);
+          setState(parsed.state);
+          setVocabList(parsed.vocabList);
+          setWordsPerDay(parsed.wordsPerDay);
+          setGhostsPerDay(parsed.ghostsPerDay);
+
+          // 防禦 4: 重置關卡至 dashboard
+          setSessionStage('dashboard');
+
+          alert(`成功覆蓋還原單一字庫！已切換至資料庫：${targetDb}`);
           return;
         }
 
         alert("JSON 格式不符，請確認是正確的備份檔案。");
       } catch (err) {
         console.error(err);
-        alert("檔案解析失敗。");
+        alert(err.message || "檔案解析失敗。");
       }
     };
     reader.readAsText(file);

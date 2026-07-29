@@ -71,9 +71,251 @@ window.exportHistoryTXT = (historicalMistakes, vocabList, dbName) => {
   if (historyList.length === 0) return alert("歷史殿堂目前空空如也，無需匯出。");
   let content = `=== 歷史殿堂單字個人紀錄 ===\n\n`;
   historyList.forEach((m, idx) => {
-    const vocabWord = (vocabList || []).find(w => w.en === m.data.en);
-    const currentEg = (vocabWord && vocabWord.eg) || m.data.eg || '';
-    content += `${idx + 1}. 錯誤次數: ${m.mistakesCount}次 | [${m.data.pos}] ${m.data.en} --> ${m.data.zh}${currentEg ? ` || ${currentEg}` : ''}\n`;
+    const itemData = (m && m.data) || { en: m?.en || '', zh: '[單字已自字典移除]', pos: 'n.', eg: '' };
+    const vocabWord = (vocabList || []).find(w => w.en === itemData.en);
+    const currentEg = (vocabWord && vocabWord.eg) || itemData.eg || '';
+    content += `${idx + 1}. 錯誤次數: ${m.mistakesCount || m.totalFails || 0}次 | [${itemData.pos || 'n.'}] ${itemData.en || ''} --> ${itemData.zh || ''}${currentEg ? ` || ${currentEg}` : ''}\n`;
   });
   window.downloadFile(`歷史殿堂_${dbName}.txt`, content, 'text/plain');
 };
+
+// ==========================================
+// --- 🌐 正規化極致輕量與無鎖相容備份系統 ---
+// ==========================================
+window.exportImportUtils = {
+  // 正規化備份打包 (防禦 1 實體正規化：刪除 historicalMistakes 與 mistakes 中重複的 data)
+  buildNormalizedBackup: (allDatabasesData, globalSettings) => {
+    const normalizedDbs = {};
+
+    for (const [db, dbObj] of Object.entries(allDatabasesData || {})) {
+      const origState = dbObj.state ? JSON.parse(JSON.stringify(dbObj.state)) : null;
+      if (origState) {
+        // 1. 瘦身歷史錯題歷史殿堂 (historicalMistakes)
+        if (origState.historicalMistakes) {
+          const normalizedHistorical = {};
+          for (const [enKey, mistakeObj] of Object.entries(origState.historicalMistakes)) {
+            if (!mistakeObj) continue;
+            const { data, ...rest } = mistakeObj;
+            normalizedHistorical[enKey] = rest;
+          }
+          origState.historicalMistakes = normalizedHistorical;
+        }
+
+        // 2. 瘦身當日特訓錯題庫 (mistakes)
+        if (origState.mistakes && typeof origState.mistakes === 'object' && !Array.isArray(origState.mistakes)) {
+          const normalizedMistakes = {};
+          for (const [enKey, mistakeObj] of Object.entries(origState.mistakes)) {
+            if (!mistakeObj) continue;
+            const { data, ...rest } = mistakeObj;
+            normalizedMistakes[enKey] = rest;
+          }
+          origState.mistakes = normalizedMistakes;
+        }
+      }
+
+      normalizedDbs[db] = {
+        settings: {
+          wordsPerDay: dbObj.wordsPerDay ?? 50,
+          ghostsPerDay: dbObj.ghostsPerDay ?? 10
+        },
+        vocabList: dbObj.vocabList || null,
+        state: origState
+      };
+    }
+
+    return {
+      version: "3.0",
+      backupType: "normalized_system",
+      exportDate: new Date().toISOString(),
+      globalSettings: {
+        currentDB: globalSettings.currentDB || 'vocab_2000',
+        dbList: globalSettings.dbList || ['vocab_2000', 'vocab_7000'],
+        speechRate: globalSettings.speechRate ?? 0.8,
+        speechEnabled: (globalSettings.speechEnabled === true || globalSettings.speechEnabled === 'true')
+      },
+      databases: normalizedDbs
+    };
+  },
+
+  // 通用防禦型匯入解析與數據轉譯
+  parseUniversalBackup: (data, rawVocabMap = {}) => {
+    // 防禦 5: 嚴格布林型態轉換
+    const parseStrictBoolean = (val, fallback = true) => {
+      if (val === undefined || val === null) return fallback;
+      if (val === true || val === 'true') return true;
+      if (val === false || val === 'false') return false;
+      return Boolean(val);
+    };
+
+    // 重建錯題實體 (防禦 1 方案 A: 自動清理已自字典刪除的孤兒錯題)
+    const rehydrateMistakes = (mistakesObj, vocabList) => {
+      if (!mistakesObj || typeof mistakesObj !== 'object') return {};
+      const vocabMap = new Map();
+      (vocabList || []).forEach(w => {
+        if (w && w.en) vocabMap.set(w.en, w);
+      });
+
+      const rehydrated = {};
+      for (const [enKey, entry] of Object.entries(mistakesObj)) {
+        if (!entry) continue;
+        let wordData = entry.data;
+        const targetKey = (wordData && wordData.en) ? wordData.en : enKey;
+        const found = vocabMap.get(targetKey);
+
+        // 方案 A：僅保留當前字庫中依然存在的單字錯題，孤兒錯題自動清理過濾
+        if (found) {
+          rehydrated[targetKey] = {
+            ...entry,
+            data: {
+              en: found.en,
+              zh: found.zh,
+              pos: found.pos || 'n.',
+              eg: found.eg || ''
+            }
+          };
+        }
+      }
+      return rehydrated;
+    };
+
+    // 格式 A: 純單字 JSON 陣列 [{en, zh...}]
+    if (Array.isArray(data)) {
+      const importedWords = data.map(item => ({
+        en: (item.en || item.word || '').trim(),
+        zh: (item.zh || item.meaning || '').trim(),
+        pos: (item.pos || 'n.').trim(),
+        eg: (item.eg || item.example || '').trim()
+      })).filter(item => item.en && item.zh);
+
+      return {
+        type: 'word_list',
+        vocabList: importedWords
+      };
+    }
+
+    // 格式 B: 新版 v3.0 正規化備份 (normalized_system)
+    if (data && (data.backupType === 'normalized_system' || data.databases || data.globalSettings)) {
+      const gs = data.globalSettings || data.global || {};
+      const importedDbList = Array.isArray(gs.dbList) && gs.dbList.length > 0 ? gs.dbList : ['vocab_2000', 'vocab_7000'];
+      const importedCurrentDB = gs.currentDB || importedDbList[0] || 'vocab_2000';
+      const importedSpeechRate = typeof gs.speechRate === 'number' ? gs.speechRate : 0.8;
+      const importedSpeechEnabled = parseStrictBoolean(gs.speechEnabled, true);
+
+      const parsedDatabases = {};
+      const dbsObj = data.databases || data.allDatabases || {};
+
+      for (const dbName of Object.keys(dbsObj)) {
+        const rawDb = dbsObj[dbName] || {};
+        let vocabList = Array.isArray(rawDb.vocabList) ? rawDb.vocabList : null;
+        
+        // 防禦 3: 空字庫降級
+        if (!vocabList || vocabList.length === 0) {
+          if (rawVocabMap[dbName]) vocabList = rawVocabMap[dbName];
+        }
+
+        const rawState = rawDb.state || {};
+        const rehydratedHistorical = rehydrateMistakes(rawState.historicalMistakes, vocabList);
+        const rehydratedActiveMistakes = rehydrateMistakes(rawState.mistakes, vocabList);
+
+        parsedDatabases[dbName] = {
+          vocabList,
+          state: {
+            currentDay: rawState.currentDay || 1,
+            learnedWords: Array.isArray(rawState.learnedWords) ? rawState.learnedWords : [],
+            mistakes: rehydratedActiveMistakes,
+            historicalMistakes: rehydratedHistorical,
+            streak: rawState.streak || { count: 0, lastDate: null }
+          },
+          wordsPerDay: rawDb.settings?.wordsPerDay ?? rawDb.wordsPerDay ?? 50,
+          ghostsPerDay: rawDb.settings?.ghostsPerDay ?? rawDb.ghostsPerDay ?? 10
+        };
+      }
+
+      return {
+        type: 'full_system',
+        globalSettings: {
+          dbList: importedDbList,
+          currentDB: importedCurrentDB,
+          speechRate: importedSpeechRate,
+          speechEnabled: importedSpeechEnabled
+        },
+        databases: parsedDatabases
+      };
+    }
+
+    // 格式 C: 舊版 v2.0 full_system 備份相容
+    if (data && data.backupType === 'full_system' && data.allDatabases) {
+      const gs = data.global || {};
+      const importedDbList = gs.dbList || ['vocab_2000', 'vocab_7000'];
+      const importedCurrentDB = gs.currentDB || 'vocab_2000';
+      const importedSpeechRate = gs.speechRate || 0.8;
+      const importedSpeechEnabled = parseStrictBoolean(gs.speechEnabled, true);
+
+      const parsedDatabases = {};
+      for (const dbName of Object.keys(data.allDatabases)) {
+        const rawDb = data.allDatabases[dbName] || {};
+        let vocabList = rawDb.vocabList;
+        if (!vocabList || vocabList.length === 0) {
+          if (rawVocabMap[dbName]) vocabList = rawVocabMap[dbName];
+        }
+        const rawState = rawDb.state || {};
+        const rehydratedHistorical = rehydrateMistakes(rawState.historicalMistakes, vocabList);
+        const rehydratedActiveMistakes = rehydrateMistakes(rawState.mistakes, vocabList);
+
+        parsedDatabases[dbName] = {
+          vocabList,
+          state: {
+            currentDay: rawState.currentDay || 1,
+            learnedWords: Array.isArray(rawState.learnedWords) ? rawState.learnedWords : [],
+            mistakes: rehydratedActiveMistakes,
+            historicalMistakes: rehydratedHistorical,
+            streak: rawState.streak || { count: 0, lastDate: null }
+          },
+          wordsPerDay: rawDb.wordsPerDay ?? 50,
+          ghostsPerDay: rawDb.ghostsPerDay ?? 10
+        };
+      }
+
+      return {
+        type: 'full_system',
+        globalSettings: {
+          dbList: importedDbList,
+          currentDB: importedCurrentDB,
+          speechRate: importedSpeechRate,
+          speechEnabled: importedSpeechEnabled
+        },
+        databases: parsedDatabases
+      };
+    }
+
+    // 單一字庫備份 (data.state)
+    if (data && data.state) {
+      const targetDb = data.dbName || 'vocab_2000';
+      let vocabList = data.vocabList || data.customVocab;
+      if (!vocabList || vocabList.length === 0) {
+        if (rawVocabMap[targetDb]) vocabList = rawVocabMap[targetDb];
+      }
+      const rawState = data.state || {};
+      const rehydratedHistorical = rehydrateMistakes(rawState.historicalMistakes, vocabList);
+      const rehydratedActiveMistakes = rehydrateMistakes(rawState.mistakes, vocabList);
+
+      return {
+        type: 'single_db',
+        dbName: targetDb,
+        vocabList,
+        state: {
+          currentDay: rawState.currentDay || 1,
+          learnedWords: Array.isArray(rawState.learnedWords) ? rawState.learnedWords : [],
+          mistakes: rehydratedActiveMistakes,
+          historicalMistakes: rehydratedHistorical,
+          streak: rawState.streak || { count: 0, lastDate: null }
+        },
+        wordsPerDay: data.wordsPerDay ?? 50,
+        ghostsPerDay: data.ghostsPerDay ?? 10
+      };
+    }
+
+    throw new Error("JSON 格式不符，請確認是正確的備份檔案。");
+  }
+};
+
