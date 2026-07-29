@@ -1203,6 +1203,7 @@ function App() {
       document.body.appendChild(element);
       element.click();
       document.body.removeChild(element);
+      URL.revokeObjectURL(element.href);
     }
   };
 
@@ -1284,7 +1285,7 @@ function App() {
             setVocabList(parsed.vocabList);
             await window.persistentStorage.saveDatabase(dbName, parsed.vocabList);
             // 防禦 4: 重置關卡頁面至 dashboard
-            setSessionStage('dashboard');
+            setView('dashboard');
             alert(`單字清單匯入成功！共載入 ${parsed.vocabList.length} 個單字。`);
           }
           return;
@@ -1347,7 +1348,7 @@ function App() {
             setGhostsPerDay(savedGhosts);
 
             // 防禦 4: 特訓關卡進行中安全重置 (Active Session Safety)
-            setSessionStage('dashboard');
+            setView('dashboard');
 
             alert(`系統完整還原成功！已成功載入 ${newDbList.length} 個字庫，並切換至：${newCurrentDB}`);
             return;
@@ -1381,7 +1382,7 @@ function App() {
           setGhostsPerDay(parsed.ghostsPerDay);
 
           // 防禦 4: 重置關卡至 dashboard
-          setSessionStage('dashboard');
+          setView('dashboard');
 
           alert(`成功覆蓋還原單一字庫！已切換至資料庫：${targetDb}`);
           return;
