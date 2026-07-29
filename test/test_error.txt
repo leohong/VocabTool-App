@@ -1,58 +1,57 @@
-Error: Message: <unknown>: Failed to read the 'localStorage' property from 'Window': Access is denied for this document.
-  (Session info: chrome=150.0.7871.184)
+Error: Message: no such element: Unable to locate element: {"method":"xpath","selector":"//button[contains(., '停止並返回')]"}
+  (Session info: chrome=150.0.7871.187); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#nosuchelementexception
 Stacktrace:
-	chromedriver!GetHandleVerifier [0x7ff75e810d25+155a5]
-	chromedriver!GetHandleVerifier [0x7ff75e810d80+15600]
-	chromedriver!(No symbol) [0x7ff75e36594d]
-	chromedriver!(No symbol) [0x7ff75e36d8c1]
-	chromedriver!(No symbol) [0x7ff75e370c1f]
-	chromedriver!(No symbol) [0x7ff75e40f292]
-	chromedriver!(No symbol) [0x7ff75e3e91ca]
-	chromedriver!(No symbol) [0x7ff75e40e01b]
-	chromedriver!(No symbol) [0x7ff75e3b2e6c]
-	chromedriver!(No symbol) [0x7ff75e3b3d93]
-	chromedriver!GetHandleVerifier [0x7ff75edf6431+5facb1]
-	chromedriver!GetHandleVerifier [0x7ff75edf0a9b+5f531b]
-	chromedriver!GetHandleVerifier [0x7ff75ee15865+61a0e5]
-	chromedriver!GetHandleVerifier [0x7ff75e82dace+3234e]
-	chromedriver!GetHandleVerifier [0x7ff75e83661c+3ae9c]
-	chromedriver!GetHandleVerifier [0x7ff75e81ab74+1f3f4]
-	chromedriver!GetHandleVerifier [0x7ff75e81ad04+1f584]
-	chromedriver!GetHandleVerifier [0x7ff75e7fd9d7+2257]
-	KERNEL32!BaseThreadInitThunk [0x7ff8f6e4e957+17]
-	ntdll!RtlUserThreadStart [0x7ff8f7eead6c+2c]
+	chromedriver!GetHandleVerifier [0x7ff6ccff0d25+155a5]
+	chromedriver!GetHandleVerifier [0x7ff6ccff0d80+15600]
+	chromedriver!(No symbol) [0x7ff6ccb4594d]
+	chromedriver!(No symbol) [0x7ff6ccba08e9]
+	chromedriver!(No symbol) [0x7ff6ccba0bec]
+	chromedriver!(No symbol) [0x7ff6ccbf1437]
+	chromedriver!(No symbol) [0x7ff6ccbee01b]
+	chromedriver!(No symbol) [0x7ff6ccb92e6c]
+	chromedriver!(No symbol) [0x7ff6ccb93d93]
+	chromedriver!GetHandleVerifier [0x7ff6cd5d6431+5facb1]
+	chromedriver!GetHandleVerifier [0x7ff6cd5d0a9b+5f531b]
+	chromedriver!GetHandleVerifier [0x7ff6cd5f5865+61a0e5]
+	chromedriver!GetHandleVerifier [0x7ff6cd00dace+3234e]
+	chromedriver!GetHandleVerifier [0x7ff6cd01661c+3ae9c]
+	chromedriver!GetHandleVerifier [0x7ff6ccffab74+1f3f4]
+	chromedriver!GetHandleVerifier [0x7ff6ccffad04+1f584]
+	chromedriver!GetHandleVerifier [0x7ff6ccfdd9d7+2257]
+	KERNEL32!BaseThreadInitThunk [0x7ffaf60ee957+17]
+	ntdll!RtlUserThreadStart [0x7ffaf716ad6c+2c]
 
 Traceback (most recent call last):
-  File "E:\ProjectCode\VocabTool-App\test\test_audio_player.py", line 42, in run_tests
-    driver.execute_script(mock_setup_script)
-  File "C:\Users\hys82\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\remote\webdriver.py", line 551, in execute_script
-    return self.execute(command, {"script": script, "args": converted_args})["value"]
+  File "D:\MyProjects\VocabTool-App\test\test_audio_player.py", line 179, in run_tests
+    btn_stop = driver.find_element(By.XPATH, "//button[contains(., '\u505c\u6b62\u4e26\u8fd4\u56de')]")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hys82\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\selenium\webdriver\remote\webdriver.py", line 926, in find_element
+    return self.execute(Command.FIND_ELEMENT, {"using": by, "value": value})["value"]
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\hys82\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\remote\webdriver.py", line 454, in execute
+  File "C:\Users\hys82\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\selenium\webdriver\remote\webdriver.py", line 458, in execute
     self.error_handler.check_response(response)
-  File "C:\Users\hys82\AppData\Local\Programs\Python\Python312\Lib\site-packages\selenium\webdriver\remote\errorhandler.py", line 232, in check_response
+  File "C:\Users\hys82\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\selenium\webdriver\remote\errorhandler.py", line 233, in check_response
     raise exception_class(message, screen, stacktrace)
-selenium.common.exceptions.WebDriverException: Message: <unknown>: Failed to read the 'localStorage' property from 'Window': Access is denied for this document.
-  (Session info: chrome=150.0.7871.184)
+selenium.common.exceptions.NoSuchElementException: Message: no such element: Unable to locate element: {"method":"xpath","selector":"//button[contains(., '停止並返回')]"}
+  (Session info: chrome=150.0.7871.187); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#nosuchelementexception
 Stacktrace:
-	chromedriver!GetHandleVerifier [0x7ff75e810d25+155a5]
-	chromedriver!GetHandleVerifier [0x7ff75e810d80+15600]
-	chromedriver!(No symbol) [0x7ff75e36594d]
-	chromedriver!(No symbol) [0x7ff75e36d8c1]
-	chromedriver!(No symbol) [0x7ff75e370c1f]
-	chromedriver!(No symbol) [0x7ff75e40f292]
-	chromedriver!(No symbol) [0x7ff75e3e91ca]
-	chromedriver!(No symbol) [0x7ff75e40e01b]
-	chromedriver!(No symbol) [0x7ff75e3b2e6c]
-	chromedriver!(No symbol) [0x7ff75e3b3d93]
-	chromedriver!GetHandleVerifier [0x7ff75edf6431+5facb1]
-	chromedriver!GetHandleVerifier [0x7ff75edf0a9b+5f531b]
-	chromedriver!GetHandleVerifier [0x7ff75ee15865+61a0e5]
-	chromedriver!GetHandleVerifier [0x7ff75e82dace+3234e]
-	chromedriver!GetHandleVerifier [0x7ff75e83661c+3ae9c]
-	chromedriver!GetHandleVerifier [0x7ff75e81ab74+1f3f4]
-	chromedriver!GetHandleVerifier [0x7ff75e81ad04+1f584]
-	chromedriver!GetHandleVerifier [0x7ff75e7fd9d7+2257]
-	KERNEL32!BaseThreadInitThunk [0x7ff8f6e4e957+17]
-	ntdll!RtlUserThreadStart [0x7ff8f7eead6c+2c]
+	chromedriver!GetHandleVerifier [0x7ff6ccff0d25+155a5]
+	chromedriver!GetHandleVerifier [0x7ff6ccff0d80+15600]
+	chromedriver!(No symbol) [0x7ff6ccb4594d]
+	chromedriver!(No symbol) [0x7ff6ccba08e9]
+	chromedriver!(No symbol) [0x7ff6ccba0bec]
+	chromedriver!(No symbol) [0x7ff6ccbf1437]
+	chromedriver!(No symbol) [0x7ff6ccbee01b]
+	chromedriver!(No symbol) [0x7ff6ccb92e6c]
+	chromedriver!(No symbol) [0x7ff6ccb93d93]
+	chromedriver!GetHandleVerifier [0x7ff6cd5d6431+5facb1]
+	chromedriver!GetHandleVerifier [0x7ff6cd5d0a9b+5f531b]
+	chromedriver!GetHandleVerifier [0x7ff6cd5f5865+61a0e5]
+	chromedriver!GetHandleVerifier [0x7ff6cd00dace+3234e]
+	chromedriver!GetHandleVerifier [0x7ff6cd01661c+3ae9c]
+	chromedriver!GetHandleVerifier [0x7ff6ccffab74+1f3f4]
+	chromedriver!GetHandleVerifier [0x7ff6ccffad04+1f584]
+	chromedriver!GetHandleVerifier [0x7ff6ccfdd9d7+2257]
+	KERNEL32!BaseThreadInitThunk [0x7ffaf60ee957+17]
+	ntdll!RtlUserThreadStart [0x7ffaf716ad6c+2c]
 
