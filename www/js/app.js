@@ -57,6 +57,7 @@ function App() {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [showAllPreviewModal, setShowAllPreviewModal] = useState(false);
   const [sessionType, setSessionType] = useState('daily');
+  const [dailyStage, setDailyStage] = useState(1);
 
   // --- 字典與手動加字狀態 ---
   const [showDictModal, setShowDictModal] = useState(false);
@@ -850,6 +851,7 @@ function App() {
     const combined = [...initializedWords, ...ghostWords];
 
     setSessionType('daily');
+    setDailyStage(1);
     setCurrentSessionWords(combined);
     setQueue(combined);
     setCurrentWord(combined[0]);
@@ -946,15 +948,28 @@ function App() {
     }
 
     if (newQueue.length === 0) {
-      setQueue(currentSessionWords);
-      setCurrentWord(currentSessionWords[0]);
-      setTypoCount(0);
-      setMustTypeCorrectly(false);
-      setCopyFailCount(0);
-      if (correctTimerRef.current) clearTimeout(correctTimerRef.current);
-      setIsCorrectFeedback(false);
-      setUserInput('');
-      setView('spelling');
+      if (sessionType === 'daily' && dailyStage === 1) {
+        setDailyStage(2);
+        setQueue(currentSessionWords);
+        setCurrentWord(currentSessionWords[0]);
+        setTypoCount(0);
+        setMustTypeCorrectly(false);
+        setCopyFailCount(0);
+        if (correctTimerRef.current) clearTimeout(correctTimerRef.current);
+        setIsCorrectFeedback(false);
+        setUserInput('');
+        setView(scanMode === 'mcq' ? 'scanning' : 'spelling');
+      } else {
+        setQueue(currentSessionWords);
+        setCurrentWord(currentSessionWords[0]);
+        setTypoCount(0);
+        setMustTypeCorrectly(false);
+        setCopyFailCount(0);
+        if (correctTimerRef.current) clearTimeout(correctTimerRef.current);
+        setIsCorrectFeedback(false);
+        setUserInput('');
+        setView(scanMode === 'mcq' ? 'scanning' : 'spelling');
+      }
     } else {
       setQueue(newQueue);
       setCurrentWord(newQueue[0]);
@@ -1909,6 +1924,7 @@ function App() {
             queue={queue}
             currentWord={currentWord}
             sessionType={sessionType}
+            dailyStage={dailyStage}
             scanMode={scanMode}
             handleExitSession={handleExitSession}
             setIsDictHintMode={setIsDictHintMode}

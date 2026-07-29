@@ -5,6 +5,7 @@ window.ScanningSession = ({
   queue,
   currentWord,
   sessionType,
+  dailyStage = 1,
   scanMode = 'flashcard',
   handleExitSession,
   setIsDictHintMode,
@@ -22,7 +23,7 @@ window.ScanningSession = ({
 }) => {
   if (!currentWord) return null;
 
-  const isMcqMode = scanMode === 'mcq' && (sessionType === 'exam' || sessionType === 'history');
+  const isMcqMode = scanMode === 'mcq' && (sessionType === 'exam' || sessionType === 'history' || (sessionType === 'daily' && dailyStage === 2));
 
   // --- 四選一模式 狀態與邏輯 ---
   const [mcqChoices, setMcqChoices] = React.useState([]);
