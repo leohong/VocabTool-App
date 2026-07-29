@@ -4,12 +4,13 @@ const rawVocab = window.rawVocab || [
   { en: 'system', zh: '系統 (範例字)', pos: 'n.' },
   { en: 'acknowledgement', zh: '承認/確認 (範例字)', pos: 'n.' }
 ];
+const rawVocab7000 = window.rawVocab7000 || rawVocab;
 
 function App() {
   // ----------------------------------------
   // --- 0. 版本管理常數 (三碼版本號規則) ---
   // ----------------------------------------
-  const APP_VERSION = "1.7.6";
+  const APP_VERSION = "1.8.0";
   const DISPLAY_VERSION = APP_VERSION.split('.').slice(0, 2).join('.');
 
   // ----------------------------------------
@@ -1238,8 +1239,44 @@ function App() {
     const reader = new FileReader();
     reader.onload = async (event) => {
       try {
-        const rawObj = JSON.parse(event.target.result);
-        const rawVocabMap = { vocab_2000: rawVocab, vocab_7000: rawVocab7000 };
+        const rawContent = (event.target.result || '').replace(/^\uFEFF/, '').trim();
+        const rawObj = JSON.parse(rawContent);
+
+        // 自動確認/動態補齊 7000 單字庫 (避免正規化還原時 7000 字庫為空導致錯題被清空)
+        let loaded7000 = window.rawVocab7000;
+        if (!loaded7000 || loaded7000.length === 0 || loaded7000 === rawVocab) {
+          try {
+            const resp = await fetch('./7000_單字庫.txt');
+            if (resp.ok) {
+              const txt = await resp.text();
+              const lines = txt.split("\n");
+              const parsed7000 = [];
+              lines.forEach(line => {
+                const match = line.match(/^(?:\d+\.\s*)?\[(.*?)\]\s*(.*?)\s*-->\s*(.*)/);
+                if (match) {
+                  const [_, pos, en, rest] = match;
+                  let zh = rest.trim(), eg = "";
+                  if (zh.includes(" || ")) {
+                    const parts = zh.split(" || ");
+                    zh = parts[0].trim(); eg = parts[1].trim();
+                  }
+                  const item = { en: en.trim(), pos: pos.trim(), zh };
+                  if (eg) item.eg = eg;
+                  parsed7000.push(item);
+                }
+              });
+              if (parsed7000.length > 0) {
+                window.rawVocab7000 = parsed7000;
+                loaded7000 = parsed7000;
+              }
+            }
+          } catch (e7000) {
+            console.warn("[Storage] Auto fetch 7000_單字庫.txt warning:", e7000);
+          }
+        }
+
+        const effective7000 = loaded7000 || rawVocab;
+        const rawVocabMap = { vocab_2000: rawVocab, vocab_7000: effective7000 };
         const parsed = window.exportImportUtils.parseUniversalBackup(rawObj, rawVocabMap);
 
         if (parsed.type === 'word_list') {
@@ -1274,7 +1311,14 @@ function App() {
             await window.persistentStorage.setSetting('vocab_speechEnabled', newSpeechEnabled);
 
             for (const [db, dbData] of Object.entries(parsed.databases)) {
-              if (dbData.vocabList) await window.persistentStorage.saveDatabase(db, dbData.vocabList);
+              if (dbData.vocabList && dbData.vocabList.length > 0) {
+                await window.persistentStorage.saveDatabase(db, dbData.vocabList);
+              } else if (db === 'vocab_7000') {
+                await window.persistentStorage.saveDatabase(db, effective7000);
+              } else if (db === 'vocab_2000') {
+                await window.persistentStorage.saveDatabase(db, rawVocab);
+              }
+
               if (dbData.state) await window.persistentStorage.saveDbState(db, dbData.state);
               if (dbData.wordsPerDay !== null && dbData.wordsPerDay !== undefined) {
                 await window.persistentStorage.setSetting(`vocab_wordsPerDay_${db}`, dbData.wordsPerDay);
@@ -1291,7 +1335,9 @@ function App() {
 
             const activeDbData = parsed.databases[newCurrentDB] || {};
             const savedState = activeDbData.state || defaultState;
-            const savedVocab = activeDbData.vocabList || (newCurrentDB === 'vocab_7000' ? rawVocab7000 : rawVocab);
+            const savedVocab = (activeDbData.vocabList && activeDbData.vocabList.length > 0)
+              ? activeDbData.vocabList
+              : (newCurrentDB === 'vocab_7000' ? effective7000 : rawVocab);
             const savedWords = activeDbData.wordsPerDay || 50;
             const savedGhosts = activeDbData.ghostsPerDay || 10;
 
@@ -1318,15 +1364,19 @@ function App() {
             await window.persistentStorage.saveDbList(currentDbList);
           }
 
+          const targetVocab = (parsed.vocabList && parsed.vocabList.length > 0)
+            ? parsed.vocabList
+            : (targetDb === 'vocab_7000' ? effective7000 : rawVocab);
+
           await window.persistentStorage.setSetting('vocab_currentDB', targetDb);
           await window.persistentStorage.saveDbState(targetDb, parsed.state);
-          await window.persistentStorage.saveDatabase(targetDb, parsed.vocabList);
+          await window.persistentStorage.saveDatabase(targetDb, targetVocab);
           await window.persistentStorage.setSetting(`vocab_wordsPerDay_${targetDb}`, parsed.wordsPerDay);
           await window.persistentStorage.setSetting(`vocab_ghostsPerDay_${targetDb}`, parsed.ghostsPerDay);
 
           setDbName(targetDb);
           setState(parsed.state);
-          setVocabList(parsed.vocabList);
+          setVocabList(targetVocab);
           setWordsPerDay(parsed.wordsPerDay);
           setGhostsPerDay(parsed.ghostsPerDay);
 
@@ -1356,13 +1406,14 @@ function App() {
   };
 
   const exportHistoryTXT = () => {
-    const historyList = Object.values(historicalMistakes);
+    const historyList = Object.values(historicalMistakes || {});
     if (historyList.length === 0) return alert("歷史殿堂目前空空如也，無需匯出。");
     let content = `=== 歷史殿堂單字個人紀錄 ===\n\n`;
     historyList.forEach((m, idx) => {
-      const vocabWord = vocabList.find(w => w.en === m.data.en);
-      const currentEg = (vocabWord && vocabWord.eg) || m.data.eg || '';
-      content += `${idx + 1}. 錯誤次數: ${m.mistakesCount}次 | [${m.data.pos}] ${m.data.en} --> ${m.data.zh}${currentEg ? ` || ${currentEg}` : ''}\n`;
+      const itemData = (m && m.data) || { en: m?.en || '', zh: '[單字已自字典移除]', pos: 'n.', eg: '' };
+      const vocabWord = (vocabList || []).find(w => w.en === itemData.en);
+      const currentEg = (vocabWord && vocabWord.eg) || itemData.eg || '';
+      content += `${idx + 1}. 錯誤次數: ${m.mistakesCount || m.totalFails || 0}次 | [${itemData.pos || 'n.'}] ${itemData.en || ''} --> ${itemData.zh || ''}${currentEg ? ` || ${currentEg}` : ''}\n`;
     });
     downloadFile(`歷史殿堂_${dbName}.txt`, content, 'text/plain');
   };
@@ -1372,12 +1423,12 @@ function App() {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = async (event) => {
-      const text = event.target.result;
+      const text = (event.target.result || '').replace(/^\uFEFF/, '').trim();
       const lines = text.split("\n");
       const importedVocab = [];
 
       lines.forEach(line => {
-        const match = line.match(/^\d+\.\s*\[(.*?)\]\s*(.*?)\s*-->\s*(.*)/);
+        const match = line.match(/^(?:\d+\.\s*)?\[(.*?)\]\s*(.*?)\s*-->\s*(.*)/);
         if (match) {
           const [_, pos, en, rest] = match;
           let zh = rest.trim();
