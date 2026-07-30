@@ -74,29 +74,43 @@ graph TD
 
 ---
 
-## 4. 常用開發與打包指令
+## 4. 開發環境、打包與測試指令 (Development & Build Pipelines)
 
-在專案根目錄下，開啟終端機執行以下指令：
+### 4.1 本地環境變數設定 (PowerShell)
+```powershell
+$env:JAVA_HOME = if (Test-Path "D:\Android\Android Studio\jbr") { "D:\Android\Android Studio\jbr" } else { "$env:ProgramFiles\Android\Android Studio\jbr" }
+if ($env:ANDROID_HOME) { $env:Path += ";$env:ANDROID_HOME\platform-tools" } else { $env:Path += ";$env:LOCALAPPDATA\Android\Sdk\platform-tools" }
+```
 
-```bash
+### 4.2 標準打包與原生部署流程
+```powershell
 # 1. 預編譯打包所有 JS 模組合併至 www/index.html (由 scripts/build.js 執行)
-npm.cmd run build
+cmd /c npm run build
 
 # 2. 將 www/ 下的 Web 資源同步至 Android 原生專案目錄
-npx cap sync android
+cmd /c npx cap sync android
 
-# 3. 在原生目錄下編譯 Debug APK
-.\gradlew.bat -p android assembleDebug
+# 3. 在原生目錄下靜音編譯 Debug APK
+cd android; .\gradlew.bat assembleDebug -q
+
+# 4. 安裝並啟動至本機 Android 實體機/模擬器
+adb install -r .\app\build\outputs\apk\debug\app-debug.apk
+adb shell am start -n com.vocabtool.app/com.vocabtool.app.MainActivity
 ```
+
+### 4.3 測試伺服器與雙專案同步協定
+- **自動化測試 LocalStorage Mock**：測試腳本寫入 `vocab_currentDB` 時，必須同步寫入 `vocab_dbList: JSON.stringify(['testDB'])`，防止 React Hook 降級載入預設字庫。
+- **動態 Port 綁定**：本地 HTTP 測試伺服器應綁定至 `127.0.0.1:0`（OS 動態分配 Port），防範固定 Port 碰撞。
+- **雙庫 (VocabTool-App ↔ VocabTool) 同步**：同步 `VocabTool` Web 專案時，將編譯完成之 `www/index.html` 覆蓋至 `VocabTool/index.html`；若遠端有更新，執行 `git pull --rebase origin main` 平滑整合後再行 `git push`。
 
 ---
 
 ## 5. 後續 AI 協作 Agent 指南
 
 如果您是下一位接力開發的 AI 助手，在開始工作前請注意：
-1. **先讀取本指南**，熟悉模組結構與打包流程。
+1. **先讀取本指南**與 [SPECIFICATION.md](file:///d:/MyProjects/VocabTool-App/SPECIFICATION.md)，熟悉架構細節與演算法規範。
 2. **絕不自動 Push**：未經使用者明確口頭同意，絕對不能執行 `git push` 命令。
 3. **新增元件時**：
    - 需在 `www/js/components/` 底下建立獨立元件，並掛載至 `window`（例如 `window.NewComponent = ...`），以便打包時能被全域識別。
    - 務必將新檔案的路徑加入 `scripts/build.js` 的 `files` 陣列中，放置在 `app.js` 之前。
-   - 執行 `npm.cmd run build` 更新 `www/index.html`。
+   - 執行 `npm run build` 更新 `www/index.html`。
