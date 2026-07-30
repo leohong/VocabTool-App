@@ -972,15 +972,21 @@ function App() {
         setUserInput('');
         setView(scanMode === 'mcq' ? 'scanning' : 'spelling');
       } else {
-        setQueue(currentSessionWords);
-        setCurrentWord(currentSessionWords[0]);
-        setTypoCount(0);
-        setMustTypeCorrectly(false);
-        setCopyFailCount(0);
-        if (correctTimerRef.current) clearTimeout(correctTimerRef.current);
-        setIsCorrectFeedback(false);
-        setUserInput('');
-        setView(scanMode === 'mcq' ? 'scanning' : 'spelling');
+        if (sessionType === 'daily') {
+          const todayStr = new Date().toDateString();
+          setState(prev => {
+            const last = prev.streak?.lastDate;
+            let newCount = prev.streak?.count || 0;
+            if (last !== todayStr) {
+              const yesterday = new Date();
+              yesterday.setDate(yesterday.getDate() - 1);
+              if (last === yesterday.toDateString()) newCount += 1;
+              else newCount = 1;
+            }
+            return { ...prev, streak: { count: newCount, lastDate: todayStr } };
+          });
+        }
+        setView('summary');
       }
     } else {
       setQueue(newQueue);
@@ -991,7 +997,8 @@ function App() {
   // 鍵盤操作監聽 (已移除觸控左右劃動，開放自由放大縮放與文字選取)
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (view === 'scanning' && currentWord) {
+      const isMcq = scanMode === 'mcq' && (sessionType === 'exam' || sessionType === 'history' || (sessionType === 'daily' && dailyStage === 2));
+      if (view === 'scanning' && currentWord && !isMcq) {
         if (e.key === 'ArrowLeft') handleScan(false);
         if (e.key === 'ArrowRight') handleScan(true);
       }
@@ -1000,7 +1007,7 @@ function App() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [view, currentWord, queue]);
+  }, [view, currentWord, queue, scanMode, sessionType, dailyStage]);
 
   const handleSpellingSubmit = (e) => {
     if (e) e.preventDefault();
