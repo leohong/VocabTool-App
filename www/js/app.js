@@ -97,15 +97,16 @@ function App() {
   const [currentAudioIndex, setCurrentAudioIndex] = useState(0);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [audioSettings, setAudioSettings] = useState({
-    repeats: 2,
-    wordPause: 1.5,
+    repeats: 1,
+    wordPause: 0,
     hideSpelling: false,
     readExample: false,
-    volume: 80,
+    volume: 100,
     spellingPause: 0,
     spellingStartDelay: 0.15,
     enVoiceName: '',
-    zhVoiceName: ''
+    zhVoiceName: '',
+    spellingRateMultiplier: 1.8
   });
   const [voices, setVoices] = useState([]);
   const [audioStatusText, setAudioStatusText] = useState('準備中');
@@ -206,17 +207,26 @@ function App() {
 
       const savedAudio = await window.persistentStorage.getSetting('vocab_audioSettings', null);
       const defaultSettings = {
-        repeats: 2,
-        wordPause: 1.5,
+        repeats: 1,
+        wordPause: 0,
         hideSpelling: false,
         readExample: false,
-        volume: 80,
+        volume: 100,
         spellingPause: 0,
         enVoiceName: '',
-        zhVoiceName: ''
+        zhVoiceName: '',
+        spellingRateMultiplier: 1.8
       };
       if (savedAudio) {
-        setAudioSettings({ ...defaultSettings, ...savedAudio });
+        setAudioSettings({
+          ...defaultSettings,
+          ...savedAudio,
+          wordPause: 0,
+          spellingPause: 0,
+          volume: 100,
+          enVoiceName: '',
+          zhVoiceName: ''
+        });
       } else {
         setAudioSettings(defaultSettings);
       }
@@ -613,7 +623,8 @@ function App() {
         setAudioStatusText(`拼讀字母...`);
         const chars = word.en.toLowerCase().replace(/[^a-z']/g, '').split('');
         const spellingStr = chars.join(', ');
-        await speakAsync(spellingStr, 'en-US', settings.enVoiceName, signal);
+        const spellingRate = speechRate * (settings.spellingRateMultiplier || 1.8);
+        await speakAsync(spellingStr, 'en-US', settings.enVoiceName || '', signal, spellingRate);
         if (signal.aborted) break;
         await delayAsync(500, signal);
 
