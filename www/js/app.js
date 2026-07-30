@@ -1618,9 +1618,9 @@ function App() {
   const deleteCurrentDB = async () => {
     if (window.confirm(`警告：確定要徹底刪除【${dbName}】字庫的所有資料與設定嗎？此操作無法復原。`)) {
       await window.persistentStorage.deleteDatabaseFiles(dbName);
-      await window.persistentStorage.setSetting(`vocab_wordsPerDay_${dbName}`, null);
-      await window.persistentStorage.setSetting(`vocab_ghostsPerDay_${dbName}`, null);
-      await window.persistentStorage.setSetting(`vocab_tempSession_${dbName}`, null);
+      await window.persistentStorage.removeSetting(`vocab_wordsPerDay_${dbName}`);
+      await window.persistentStorage.removeSetting(`vocab_ghostsPerDay_${dbName}`);
+      await window.persistentStorage.removeSetting(`vocab_tempSession_${dbName}`);
 
       const updatedList = dbList.filter(name => name !== dbName);
       let nextDb;

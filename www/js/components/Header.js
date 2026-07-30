@@ -48,18 +48,27 @@ window.Header = ({
         )}
 
         {/* 進度選單 */}
-        <div className="flex items-center text-[11px] sm:text-xs text-slate-400 font-medium shrink-0 whitespace-nowrap">
-          <select
-            value={currentDay}
-            onChange={(e) => setCurrentDay(parseInt(e.target.value, 10))}
-            disabled={view !== 'dashboard'}
-            className="bg-slate-900 border border-slate-700 text-indigo-300 rounded-md px-1.5 py-0.5 text-[11px] sm:text-xs focus:outline-none focus:border-indigo-500 font-mono"
-          >
-            {Array.from({ length: Math.max(50, Math.ceil(vocabListLength / wordsPerDay)) }, (_, i) => i + 1).map(d => (
-              <option key={d} value={d}>第 {d} 天</option>
-            ))}
-          </select>
-        </div>
+        {(() => {
+          const safeWordsPerDay = Math.max(1, parseInt(wordsPerDay, 10) || 50);
+          const safeVocabLength = Math.max(0, parseInt(vocabListLength, 10) || 0);
+          const totalDays = Math.max(50, Math.ceil(safeVocabLength / safeWordsPerDay));
+          const safeLength = Number.isFinite(totalDays) && totalDays > 0 ? Math.min(10000, totalDays) : 50;
+
+          return (
+            <div className="flex items-center text-[11px] sm:text-xs text-slate-400 font-medium shrink-0 whitespace-nowrap">
+              <select
+                value={currentDay}
+                onChange={(e) => setCurrentDay(parseInt(e.target.value, 10))}
+                disabled={view !== 'dashboard'}
+                className="bg-slate-900 border border-slate-700 text-indigo-300 rounded-md px-1.5 py-0.5 text-[11px] sm:text-xs focus:outline-none focus:border-indigo-500 font-mono"
+              >
+                {Array.from({ length: safeLength }, (_, i) => i + 1).map(d => (
+                  <option key={d} value={d}>第 {d} 天</option>
+                ))}
+              </select>
+            </div>
+          );
+        })()}
 
         {/* 橫向/平板/電腦 (>=640px) 顯示在最右側 */}
         <a

@@ -39,7 +39,8 @@
           const { value } = await Preferences.get({ key: key });
           if (value === null || value === undefined) return defaultValue;
           try {
-            return JSON.parse(value);
+            const parsed = JSON.parse(value);
+            return (parsed === null || parsed === undefined) ? defaultValue : parsed;
           } catch (e) {
             return value; // 如果不是 JSON 字串，直接傳回原值
           }
@@ -47,7 +48,8 @@
           const val = localStorage.getItem(key);
           if (val === null || val === undefined) return defaultValue;
           try {
-            return JSON.parse(val);
+            const parsed = JSON.parse(val);
+            return (parsed === null || parsed === undefined) ? defaultValue : parsed;
           } catch (e) {
             return val;
           }

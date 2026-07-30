@@ -35,10 +35,12 @@ window.useVocabState = () => {
 
     // 讀取每日新字數與幽靈數限制
     const savedWords = await window.persistentStorage.getSetting(`vocab_wordsPerDay_${targetDb}`, 50);
-    setWordsPerDay(savedWords);
+    const safeWords = (typeof savedWords === 'number' && !isNaN(savedWords) && savedWords > 0) ? savedWords : 50;
+    setWordsPerDay(safeWords);
 
     const savedGhosts = await window.persistentStorage.getSetting(`vocab_ghostsPerDay_${targetDb}`, 10);
-    setGhostsPerDay(savedGhosts);
+    const safeGhosts = (typeof savedGhosts === 'number' && !isNaN(savedGhosts) && savedGhosts >= 0) ? savedGhosts : 10;
+    setGhostsPerDay(safeGhosts);
   };
 
   // 全域初始化讀取 (僅在 App 載入時執行一次)
