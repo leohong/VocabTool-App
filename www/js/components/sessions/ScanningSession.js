@@ -106,6 +106,7 @@ window.ScanningSession = ({
         handleScan(true);
       }, 500);
     } else {
+      speak(currentWord.en, true);
       timerRef.current = setTimeout(() => {
         handleScan(false);
       }, 1100);
