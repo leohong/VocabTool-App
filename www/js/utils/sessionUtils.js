@@ -53,3 +53,22 @@ window.getFilteredVocabList = (vocabList, query) => {
     (w.pos && w.pos.toLowerCase().includes(q))
   );
 };
+
+// Pure function: 計算今日基本單字 + 幽靈字，供多個 Hook 共用
+// 不依賴 React state，所有資料皆由參數傳入
+window.computeDailyWords = (vocabList, currentDay, wordsPerDay, ghostsPerDay, historicalMistakes) => {
+  const startIndex = (currentDay - 1) * wordsPerDay;
+  let baseWords = vocabList.slice(startIndex, startIndex + wordsPerDay);
+  if (baseWords.length === 0 && vocabList.length > 0) baseWords = vocabList.slice(-wordsPerDay);
+
+  const baseEnSet = new Set(baseWords.map(w => w.en));
+  const now = Date.now();
+
+  const ghostWords = Object.values(historicalMistakes || {})
+    .filter(h => !h.immune && (now - h.archivedDate) >= (h.interval * 24 * 60 * 60 * 1000))
+    .filter(h => !baseEnSet.has(h.data.en))
+    .slice(0, ghostsPerDay)
+    .map(h => ({ ...h.data, _hasCountedMistake: false, _isGhost: true, _historyData: h }));
+
+  return { baseWords, ghostWords };
+};

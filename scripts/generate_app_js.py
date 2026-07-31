@@ -1,4 +1,9 @@
-const { useState, useEffect, useRef } = React;
+"""
+generate_app_js.py - 產生新版 app.js (模組化重構版)
+執行方式: python scripts/generate_app_js.py
+"""
+
+NEW_APP_JS = r'''const { useState, useEffect, useRef } = React;
 
 const rawVocab = window.rawVocab || [
   { en: 'system', zh: '系統 (範例字)', pos: 'n.' },
@@ -1391,3 +1396,10 @@ function App() {
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);
+'''
+
+output_path = r'd:\MyProjects\VocabTool-App\www\js\app.js'
+with open(output_path, 'w', encoding='utf-8') as f:
+    f.write(NEW_APP_JS)
+
+print(f"app.js written: {len(NEW_APP_JS)} chars to {output_path}")
