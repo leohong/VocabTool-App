@@ -378,18 +378,21 @@ window.useSessionLogic = ({
             }
           }
 
-          if (currentWord._isGhost) {
+          // 歷史幽靈 / 隨機抽查 SRS 進階（與 handleScan 邏輯一致）
+          if (currentWord._isGhost || currentWord._isHistoryCheck) {
             const intervals = [7, 21, 60, 180];
-            const h = currentWord._historyData;
-            const nextStep = (h.step || 0) + 1;
-            const newHistory = { ...nextState.historicalMistakes };
+            const h = currentWord._historyData || prev.historicalMistakes[currentWord.en];
+            if (h) {
+              const nextStep = (h.step || 0) + 1;
+              const newHistory = { ...nextState.historicalMistakes };
 
-            if (nextStep >= 4) {
-              newHistory[currentWord.en] = { ...h, immune: true };
-            } else {
-              newHistory[currentWord.en] = { ...h, step: nextStep, interval: intervals[nextStep], archivedDate: Date.now() };
+              if (nextStep >= 4) {
+                newHistory[currentWord.en] = { ...h, immune: true };
+              } else {
+                newHistory[currentWord.en] = { ...h, step: nextStep, interval: intervals[nextStep], archivedDate: Date.now() };
+              }
+              nextState.historicalMistakes = newHistory;
             }
-            nextState.historicalMistakes = newHistory;
           }
 
           return nextState;
