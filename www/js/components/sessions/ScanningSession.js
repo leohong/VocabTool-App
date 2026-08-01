@@ -23,7 +23,7 @@ window.ScanningSession = ({
 }) => {
   if (!currentWord) return null;
 
-  const isTestingStage = sessionType === 'exam' || sessionType === 'history' || (sessionType === 'daily' && dailyStage === 2);
+  const isTestingStage = sessionType === 'exam' || sessionType === 'history';
   // 隨機模式：每個 word 上有 _randomIsSpelling 標記，拼寫題不用 MCQ
   const isMcqMode = isTestingStage && (
     scanMode === 'mcq' ||

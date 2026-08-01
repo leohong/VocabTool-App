@@ -116,8 +116,8 @@ window.useSessionLogic = ({
     } else {
       setQueue(newQueue);
       setCurrentWord(newQueue[0]);
-      // 隨機模式下，根據下一個 word 的標記切換 view
-      const isTestingStage = curSessionType === 'exam' || curSessionType === 'history' || (curSessionType === 'daily' && dailyStage === 2);
+      // 隨機模式下，根據下一個 word 的標記切換 view (僅限降溫 exam 與深度 history)
+      const isTestingStage = curSessionType === 'exam' || curSessionType === 'history';
       if (scanMode === 'random' && isTestingStage) {
         (setViewFn || setView)(newQueue[0]._randomIsSpelling ? 'spelling' : 'scanning');
       }
@@ -299,16 +299,15 @@ window.useSessionLogic = ({
     if (newQueue.length === 0) {
       if (sessionType === 'daily' && dailyStage === 1) {
         setDailyStage(2);
-        const stage2Words = assignRandomModes(currentSessionWords);
-        setQueue(stage2Words);
-        setCurrentWord(stage2Words[0]);
+        setQueue(currentSessionWords);
+        setCurrentWord(currentSessionWords[0]);
         setTypoCount(0);
         setMustTypeCorrectly(false);
         setCopyFailCount(0);
         if (correctTimerRef.current) clearTimeout(correctTimerRef.current);
         setIsCorrectFeedback(false);
         setUserInput('');
-        setView(pickViewForWord(stage2Words[0], true));
+        setView('spelling');
       } else {
         if (sessionType === 'daily') {
           const todayStr = new Date().toDateString();
@@ -329,8 +328,8 @@ window.useSessionLogic = ({
     } else {
       setQueue(newQueue);
       setCurrentWord(newQueue[0]);
-      // 隨機模式下，根據下一個 word 的標記切換 view
-      const isTestingStage = sessionType === 'exam' || sessionType === 'history' || (sessionType === 'daily' && dailyStage === 2);
+      // 隨機模式下，根據下一個 word 的標記切換 view (僅限降溫 exam 與深度 history)
+      const isTestingStage = sessionType === 'exam' || sessionType === 'history';
       if (scanMode === 'random' && isTestingStage) {
         setView(newQueue[0]._randomIsSpelling ? 'spelling' : 'scanning');
       }

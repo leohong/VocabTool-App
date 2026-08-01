@@ -345,7 +345,7 @@ function App() {
   // 鍵盤操作監聽
   useEffect(() => {
     const handleKeyDown = (e) => {
-      const isMcq = (scanMode === 'mcq' || (scanMode === 'random' && !currentWord?._randomIsSpelling)) && (sessionType === 'exam' || sessionType === 'history' || (sessionType === 'daily' && dailyStage === 2));
+      const isMcq = (scanMode === 'mcq' || (scanMode === 'random' && !currentWord?._randomIsSpelling)) && (sessionType === 'exam' || sessionType === 'history');
       if (view === 'scanning' && currentWord && !isMcq) {
         if (e.key === 'ArrowLeft') handleScan(false);
         if (e.key === 'ArrowRight') handleScan(true);
