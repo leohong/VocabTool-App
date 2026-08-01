@@ -23,7 +23,12 @@ window.ScanningSession = ({
 }) => {
   if (!currentWord) return null;
 
-  const isMcqMode = scanMode === 'mcq' && (sessionType === 'exam' || sessionType === 'history' || (sessionType === 'daily' && dailyStage === 2));
+  const isTestingStage = sessionType === 'exam' || sessionType === 'history' || (sessionType === 'daily' && dailyStage === 2);
+  // 隨機模式：每個 word 上有 _randomIsSpelling 標記，拼寫題不用 MCQ
+  const isMcqMode = isTestingStage && (
+    scanMode === 'mcq' ||
+    (scanMode === 'random' && !currentWord._randomIsSpelling)
+  );
 
   // --- 四選一模式 狀態與邏輯 ---
   const [mcqChoices, setMcqChoices] = React.useState([]);

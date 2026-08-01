@@ -1,4 +1,4 @@
-﻿// ==========================================
+// ==========================================
 // --- 🎯 Custom Hook: useSessionLogic.js ---
 // ==========================================
 // 負責所有特訓關卡的核心業務邏輯：
@@ -57,6 +57,25 @@ window.useSessionLogic = ({
     return `vocab_tempSession_${db}_daily`;
   };
 
+  // --- 隨機模式：為每個 word 決定本次是拼寫或 MCQ ---
+  // 僅在 isTestingStage (exam/history/daily-stage2) 才套用隨機
+  const assignRandomModes = (words) => {
+    if (scanMode !== 'random') return words;
+    return words.map(w => ({
+      ...w,
+      _randomIsSpelling: Math.random() < 0.5
+    }));
+  };
+
+  // --- 根據 scanMode 與第一個 word 決定 setView 目標 ---
+  const pickViewForWord = (word, isTestingStage) => {
+    if (!isTestingStage) return 'scanning';
+    if (scanMode === 'mcq') return 'scanning';
+    if (scanMode === 'flashcard') return 'spelling';
+    // random 模式：看 word 上的標記
+    return (word && word._randomIsSpelling) ? 'spelling' : 'scanning';
+  };
+
   // --- punishWord ---
   const punishWord = (wordObj) => {
     setState(prev => {
@@ -97,6 +116,11 @@ window.useSessionLogic = ({
     } else {
       setQueue(newQueue);
       setCurrentWord(newQueue[0]);
+      // 隨機模式下，根據下一個 word 的標記切換 view
+      const isTestingStage = curSessionType === 'exam' || curSessionType === 'history' || (curSessionType === 'daily' && dailyStage === 2);
+      if (scanMode === 'random' && isTestingStage) {
+        (setViewFn || setView)(newQueue[0]._randomIsSpelling ? 'spelling' : 'scanning');
+      }
     }
   };
 
@@ -153,7 +177,8 @@ window.useSessionLogic = ({
     await window.persistentStorage.setSetting(key, null);
 
     if (mistakesTotal === 0) return alert('錯題庫目前完美清空，無需降溫大會考！🎉');
-    const shuffled = [...activeMistakesList].sort(() => 0.5 - Math.random()).slice(0, 50).map(m => ({ ...m.data, _hasCountedMistake: false }));
+    const base = [...activeMistakesList].sort(() => 0.5 - Math.random()).slice(0, 50).map(m => ({ ...m.data, _hasCountedMistake: false }));
+    const shuffled = assignRandomModes(base);
     setSessionType('exam');
     setCurrentSessionWords(shuffled);
     setQueue(shuffled);
@@ -164,7 +189,7 @@ window.useSessionLogic = ({
     if (correctTimerRef.current) clearTimeout(correctTimerRef.current);
     setIsCorrectFeedback(false);
     setUserInput('');
-    setView(scanMode === 'mcq' ? 'scanning' : 'spelling');
+    setView(pickViewForWord(shuffled[0], true));
   };
 
   // --- startHistoryCheck ---
@@ -173,7 +198,8 @@ window.useSessionLogic = ({
     await window.persistentStorage.setSetting(key, null);
 
     if (historyTotal === 0) return alert('歷史殿堂目前為空，請先完成日常錯題的雙倍消除！');
-    const shuffled = Object.values(historicalMistakes).sort(() => 0.5 - Math.random()).slice(0, 50).map(h => ({ ...h.data, _hasCountedMistake: false, _isHistoryCheck: true, _historyData: h }));
+    const base = Object.values(historicalMistakes).sort(() => 0.5 - Math.random()).slice(0, 50).map(h => ({ ...h.data, _hasCountedMistake: false, _isHistoryCheck: true, _historyData: h }));
+    const shuffled = assignRandomModes(base);
     setSessionType('history');
     setCurrentSessionWords(shuffled);
     setQueue(shuffled);
@@ -184,7 +210,7 @@ window.useSessionLogic = ({
     if (correctTimerRef.current) clearTimeout(correctTimerRef.current);
     setIsCorrectFeedback(false);
     setUserInput('');
-    setView(scanMode === 'mcq' ? 'scanning' : 'spelling');
+    setView(pickViewForWord(shuffled[0], true));
   };
 
   // --- handleForceMistake ---
@@ -272,15 +298,16 @@ window.useSessionLogic = ({
     if (newQueue.length === 0) {
       if (sessionType === 'daily' && dailyStage === 1) {
         setDailyStage(2);
-        setQueue(currentSessionWords);
-        setCurrentWord(currentSessionWords[0]);
+        const stage2Words = assignRandomModes(currentSessionWords);
+        setQueue(stage2Words);
+        setCurrentWord(stage2Words[0]);
         setTypoCount(0);
         setMustTypeCorrectly(false);
         setCopyFailCount(0);
         if (correctTimerRef.current) clearTimeout(correctTimerRef.current);
         setIsCorrectFeedback(false);
         setUserInput('');
-        setView(scanMode === 'mcq' ? 'scanning' : 'spelling');
+        setView(pickViewForWord(stage2Words[0], true));
       } else {
         if (sessionType === 'daily') {
           const todayStr = new Date().toDateString();
@@ -301,6 +328,11 @@ window.useSessionLogic = ({
     } else {
       setQueue(newQueue);
       setCurrentWord(newQueue[0]);
+      // 隨機模式下，根據下一個 word 的標記切換 view
+      const isTestingStage = sessionType === 'exam' || sessionType === 'history' || (sessionType === 'daily' && dailyStage === 2);
+      if (scanMode === 'random' && isTestingStage) {
+        setView(newQueue[0]._randomIsSpelling ? 'spelling' : 'scanning');
+      }
     }
   };
 

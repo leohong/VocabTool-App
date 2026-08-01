@@ -48,7 +48,7 @@ function App() {
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [speechRate, setSpeechRate] = useState(0.8);
   const [speechEnabled, setSpeechEnabled] = useState(true);
-  const [scanMode, setScanMode] = useState('flashcard');
+  const [scanMode, setScanMode] = useState('random');
 
   const [view, setView] = useState('dashboard');
   const [showMistakeModal, setShowMistakeModal] = useState(false);
@@ -208,8 +208,8 @@ function App() {
       const savedEnabled = await window.persistentStorage.getSetting('vocab_speechEnabled', true);
       setSpeechEnabled(savedEnabled);
 
-      const savedScanMode = await window.persistentStorage.getSetting('vocab_scanMode', 'flashcard');
-      setScanMode(savedScanMode === 'mcq' ? 'mcq' : 'flashcard');
+      const savedScanMode = await window.persistentStorage.getSetting('vocab_scanMode', 'random');
+      setScanMode(['mcq', 'flashcard', 'random'].includes(savedScanMode) ? savedScanMode : 'random');
 
       const savedAudio = await window.persistentStorage.getSetting('vocab_audioSettings', null);
       const defaultSettings = {
@@ -345,7 +345,7 @@ function App() {
   // 鍵盤操作監聽
   useEffect(() => {
     const handleKeyDown = (e) => {
-      const isMcq = scanMode === 'mcq' && (sessionType === 'exam' || sessionType === 'history' || (sessionType === 'daily' && dailyStage === 2));
+      const isMcq = (scanMode === 'mcq' || (scanMode === 'random' && !currentWord?._randomIsSpelling)) && (sessionType === 'exam' || sessionType === 'history' || (sessionType === 'daily' && dailyStage === 2));
       if (view === 'scanning' && currentWord && !isMcq) {
         if (e.key === 'ArrowLeft') handleScan(false);
         if (e.key === 'ArrowRight') handleScan(true);

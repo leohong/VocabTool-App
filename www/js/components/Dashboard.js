@@ -265,12 +265,23 @@ window.Dashboard = ({
               type="button"
               onClick={() => setScanMode('flashcard')}
               className={`px-2 py-1 text-xs font-bold rounded transition-all ${
-                scanMode !== 'mcq'
+                scanMode === 'flashcard'
                   ? 'bg-indigo-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               🎴 閃卡
+            </button>
+            <button
+              type="button"
+              onClick={() => setScanMode('random')}
+              className={`px-2 py-1 text-xs font-bold rounded transition-all ${
+                scanMode === 'random'
+                  ? 'bg-violet-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              🎲 隨機
             </button>
             <button
               type="button"
