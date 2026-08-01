@@ -51,21 +51,29 @@ window.Header = ({
         {(() => {
           const safeWordsPerDay = Math.max(1, parseInt(wordsPerDay, 10) || 50);
           const safeVocabLength = Math.max(0, parseInt(vocabListLength, 10) || 0);
-          const totalDays = Math.max(50, Math.ceil(safeVocabLength / safeWordsPerDay));
+          const totalDays = Math.max(1, Math.ceil(safeVocabLength / safeWordsPerDay));
           const safeLength = Number.isFinite(totalDays) && totalDays > 0 ? Math.min(10000, totalDays) : 50;
+          const isMastered = safeVocabLength > 0 && (currentDay > totalDays || (currentDay - 1) * safeWordsPerDay >= safeVocabLength);
 
           return (
             <div className="flex items-center text-[11px] sm:text-xs text-slate-400 font-medium shrink-0 whitespace-nowrap">
-              <select
-                value={currentDay}
-                onChange={(e) => setCurrentDay(parseInt(e.target.value, 10))}
-                disabled={view !== 'dashboard'}
-                className="bg-slate-900 border border-slate-700 text-indigo-300 rounded-md px-1.5 py-0.5 text-[11px] sm:text-xs focus:outline-none focus:border-indigo-500 font-mono"
-              >
-                {Array.from({ length: safeLength }, (_, i) => i + 1).map(d => (
-                  <option key={d} value={d}>第 {d} 天</option>
-                ))}
-              </select>
+              {isMastered ? (
+                <div className="bg-amber-950/40 border border-amber-500/40 text-amber-300 font-bold px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm animate-pulse">
+                  <span>🏆</span>
+                  <span>特訓結業</span>
+                </div>
+              ) : (
+                <select
+                  value={Math.min(currentDay, totalDays)}
+                  onChange={(e) => setCurrentDay(parseInt(e.target.value, 10))}
+                  disabled={view !== 'dashboard'}
+                  className="bg-slate-900 border border-slate-700 text-indigo-300 rounded-md px-1.5 py-0.5 text-[11px] sm:text-xs focus:outline-none focus:border-indigo-500 font-mono"
+                >
+                  {Array.from({ length: safeLength }, (_, i) => i + 1).map(d => (
+                    <option key={d} value={d}>第 {d} 天</option>
+                  ))}
+                </select>
+              )}
             </div>
           );
         })()}

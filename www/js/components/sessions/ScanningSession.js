@@ -59,22 +59,32 @@ window.ScanningSession = ({
       setIsAnswered(false);
 
       const correctZh = (currentWord.zh || '').trim();
+      const targetPos = (currentWord.pos || '').trim().toLowerCase();
 
-      // 彙整抽樣池：包含特訓字庫、錯題集中營與歷史殿堂的所有單字
+      // 彙整抽樣池：優先同詞性 (POS Matching) -> 字庫/錯題/歷史殿堂 -> 全域 rawVocab 字庫
       const mistakesPool = (activeMistakesList || []).map(m => m.data || m);
       const historyPool = Object.values(historicalMistakes || {}).map(h => h.data || h);
-      const combinedPool = [...(vocabList || []), ...mistakesPool, ...historyPool];
+      const rawPool = window.rawVocab || [];
+      const combinedPool = [...(vocabList || []), ...mistakesPool, ...historyPool, ...rawPool];
 
-      // 自字庫、錯題與歷史殿堂隨機挑選 3 個不重複的相異中文釋義干擾選項
-      const distractors = combinedPool
+      // 1. 優先抽選同詞性 (POS Matching) 的相異中文釋義干擾選項
+      const posMatchedDistractors = combinedPool
+        .filter(w => w && w.zh && w.zh.trim() && w.zh.trim() !== correctZh && targetPos && w.pos && w.pos.trim().toLowerCase() === targetPos)
+        .map(w => w.zh.trim());
+
+      // 2. 備用：一般相異中文釋義干擾選項
+      const genericDistractors = combinedPool
         .filter(w => w && w.zh && w.zh.trim() && w.zh.trim() !== correctZh)
         .map(w => w.zh.trim());
 
-      // 隨機洗牌干擾選項
-      const shuffledDistractors = distractors.sort(() => 0.5 - Math.random());
-      const uniqueDistractors = Array.from(new Set(shuffledDistractors)).slice(0, 3);
+      const candidateList = [
+        ...Array.from(new Set(posMatchedDistractors.sort(() => 0.5 - Math.random()))),
+        ...Array.from(new Set(genericDistractors.sort(() => 0.5 - Math.random())))
+      ];
 
-      // 若字庫數量過少不足 3 個，補充預設輔助選項
+      const uniqueDistractors = Array.from(new Set(candidateList)).slice(0, 3);
+
+      // 極極罕見情況：若全字庫仍不足 3 個，降級補充
       const fallbackOptions = ['特別的', '重要的', '明顯的', '額外的', '基本的'];
       while (uniqueDistractors.length < 3) {
         const fb = fallbackOptions[Math.floor(Math.random() * fallbackOptions.length)];

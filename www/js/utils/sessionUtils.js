@@ -35,6 +35,11 @@ window.calculateIndicator = (mistakesTotal, historicalMistakesCount = 0) => {
   }
 };
 
+// 邏輯換日線（凌晨 4:00 前算前一天的邏輯日期，防止夜貓子跨夜暫存與打卡失敗）
+window.getLogicalDate = () => {
+  return new Date(Date.now() - 4 * 60 * 60 * 1000).toDateString();
+};
+
 // 獲取本日進度單字清單
 window.getDailyWordsList = (vocabList, currentDay, wordsPerDay, completedWordsCount) => {
   if (!vocabList || vocabList.length === 0) return [];
@@ -44,6 +49,9 @@ window.getDailyWordsList = (vocabList, currentDay, wordsPerDay, completedWordsCo
     startIdx = completedWordsCount;
   } else {
     startIdx = Math.max(0, ((currentDay || 1) - 1) * safeWPD);
+  }
+  if (startIdx >= vocabList.length) {
+    return vocabList.slice(-safeWPD);
   }
   return vocabList.slice(startIdx, startIdx + safeWPD);
 };
@@ -74,8 +82,21 @@ window.computeDailyWords = (vocabList, currentDay, wordsPerDay, ghostsPerDay, hi
     startIndex = Math.max(0, ((currentDay || 1) - 1) * safeWPD);
   }
 
-  let baseWords = vocabList.slice(startIndex, startIndex + safeWPD);
-  if (baseWords.length === 0 && vocabList.length > 0) baseWords = vocabList.slice(-safeWPD);
+  let baseWords;
+  let isMasteredMode = false;
+
+  if (vocabList && vocabList.length > 0) {
+    if (startIndex >= vocabList.length) {
+      // 🏆 全字庫通關模式：每日保養隨機抽查
+      isMasteredMode = true;
+      const maintenanceCount = Math.min(safeWPD, vocabList.length);
+      baseWords = [...vocabList].sort(() => 0.5 - Math.random()).slice(0, maintenanceCount);
+    } else {
+      baseWords = vocabList.slice(startIndex, startIndex + safeWPD);
+    }
+  } else {
+    baseWords = [];
+  }
 
   const baseEnSet = new Set(baseWords.map(w => w.en));
   const now = Date.now();
@@ -86,5 +107,5 @@ window.computeDailyWords = (vocabList, currentDay, wordsPerDay, ghostsPerDay, hi
     .slice(0, safeGPD)
     .map(h => ({ ...h.data, _hasCountedMistake: false, _isGhost: true, _historyData: h }));
 
-  return { baseWords, ghostWords };
+  return { baseWords, ghostWords, isMasteredMode };
 };
