@@ -36,10 +36,16 @@ window.calculateIndicator = (mistakesTotal, historicalMistakesCount = 0) => {
 };
 
 // 獲取本日進度單字清單
-window.getDailyWordsList = (vocabList, currentDay, wordsPerDay) => {
+window.getDailyWordsList = (vocabList, currentDay, wordsPerDay, completedWordsCount) => {
   if (!vocabList || vocabList.length === 0) return [];
-  const startIdx = (currentDay - 1) * (parseInt(wordsPerDay, 10) || 50);
-  return vocabList.slice(startIdx, startIdx + (parseInt(wordsPerDay, 10) || 50));
+  const safeWPD = Math.max(1, parseInt(wordsPerDay, 10) || 50);
+  let startIdx;
+  if (typeof completedWordsCount === 'number' && !isNaN(completedWordsCount) && completedWordsCount >= 0) {
+    startIdx = completedWordsCount;
+  } else {
+    startIdx = Math.max(0, ((currentDay || 1) - 1) * safeWPD);
+  }
+  return vocabList.slice(startIdx, startIdx + safeWPD);
 };
 
 // 獲取過濾搜尋單字清單
@@ -56,11 +62,18 @@ window.getFilteredVocabList = (vocabList, query) => {
 
 // Pure function: 計算今日基本單字 + 幽靈字，供多個 Hook 共用
 // 不依賴 React state，所有資料皆由參數傳入
-window.computeDailyWords = (vocabList, currentDay, wordsPerDay, ghostsPerDay, historicalMistakes) => {
+window.computeDailyWords = (vocabList, currentDay, wordsPerDay, ghostsPerDay, historicalMistakes, completedWordsCount) => {
   // 防禦：onBlur 前 state 可能暫時為空字串或 NaN，強制回落預設值
   const safeWPD = Math.max(1, parseInt(wordsPerDay, 10) || 50);
   const safeGPD = Math.max(0, parseInt(ghostsPerDay, 10) || 0);
-  const startIndex = (currentDay - 1) * safeWPD;
+  
+  let startIndex;
+  if (typeof completedWordsCount === 'number' && !isNaN(completedWordsCount) && completedWordsCount >= 0) {
+    startIndex = completedWordsCount;
+  } else {
+    startIndex = Math.max(0, ((currentDay || 1) - 1) * safeWPD);
+  }
+
   let baseWords = vocabList.slice(startIndex, startIndex + safeWPD);
   if (baseWords.length === 0 && vocabList.length > 0) baseWords = vocabList.slice(-safeWPD);
 

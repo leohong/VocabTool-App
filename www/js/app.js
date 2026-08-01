@@ -365,7 +365,7 @@ function App() {
   if (mistakesTotal >= 100) indicator = { color: 'text-red-400', border: 'border-red-500/40', bg: 'bg-red-950/30', icon: '🔴', title: '過載' };
 
   // getDailyWords wrapper (for PreviewModal backward compat)
-  const getDailyWords = () => window.computeDailyWords(vocabList, currentDay, wordsPerDay, ghostsPerDay, historicalMistakes);
+  const getDailyWords = () => window.computeDailyWords(vocabList, currentDay, wordsPerDay, ghostsPerDay, historicalMistakes, state.completedWordsCount);
 
   const handleAudioSetupClick = async () => {
     const key = `vocab_tempSession_${dbName}_audio`;
@@ -1130,7 +1130,7 @@ function App() {
           mistakesTotal={mistakesTotal}
           streak={streak}
           currentDay={currentDay}
-          setCurrentDay={(d) => setState(prev => ({ ...prev, currentDay: d }))}
+          setCurrentDay={(d) => setState(prev => ({ ...prev, currentDay: d, completedWordsCount: Math.max(0, (d - 1) * Math.max(1, parseInt(wordsPerDay, 10) || 50)) }))}
           vocabListLength={vocabList.length}
           wordsPerDay={wordsPerDay}
           view={view}

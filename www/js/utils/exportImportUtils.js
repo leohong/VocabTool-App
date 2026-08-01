@@ -213,19 +213,23 @@ window.exportImportUtils = {
           const rehydratedHistorical = rehydrateMistakes(rawHistorical, vocabList);
           const rehydratedActiveMistakes = rehydrateMistakes(rawActiveMistakes, vocabList);
 
-          const rawWordsPerDay = rawDb.settings?.wordsPerDay ?? rawDb.wordsPerDay;
-          const rawGhostsPerDay = rawDb.settings?.ghostsPerDay ?? rawDb.ghostsPerDay;
+          const safeWPD = parseInt(rawWordsPerDay, 10) || 50;
+          const parsedCurrentDay = parseInt(rawState.currentDay, 10) || 1;
+          const parsedCompletedCount = (typeof rawState.completedWordsCount === 'number' && !isNaN(rawState.completedWordsCount) && rawState.completedWordsCount >= 0)
+            ? rawState.completedWordsCount
+            : Math.max(0, (parsedCurrentDay - 1) * safeWPD);
 
           parsedDatabases[dbName] = {
             vocabList,
             state: {
-              currentDay: parseInt(rawState.currentDay, 10) || 1,
+              currentDay: Math.floor(parsedCompletedCount / safeWPD) + 1,
+              completedWordsCount: parsedCompletedCount,
               learnedWords: Array.isArray(rawState.learnedWords) ? rawState.learnedWords : (Array.isArray(rawState.learned) ? rawState.learned : []),
               mistakes: rehydratedActiveMistakes,
               historicalMistakes: rehydratedHistorical,
               streak: rawState.streak || { count: 0, lastDate: null }
             },
-            wordsPerDay: parseInt(rawWordsPerDay, 10) || 50,
+            wordsPerDay: safeWPD,
             ghostsPerDay: parseInt(rawGhostsPerDay, 10) || 10
           };
         }

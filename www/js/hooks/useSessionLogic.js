@@ -102,14 +102,24 @@ window.useSessionLogic = ({
         const todayStr = new Date().toDateString();
         setState(prev => {
           const last = prev.streak?.lastDate;
-          let newCount = prev.streak?.count || 0;
+          let newStreak = prev.streak?.count || 0;
           if (last !== todayStr) {
             const yesterday = new Date();
             yesterday.setDate(yesterday.getDate() - 1);
-            if (last === yesterday.toDateString()) newCount += 1;
-            else newCount = 1;
+            if (last === yesterday.toDateString()) newStreak += 1;
+            else newStreak = 1;
           }
-          return { ...prev, streak: { count: newCount, lastDate: todayStr } };
+          const safeWPD = Math.max(1, parseInt(wordsPerDay, 10) || 50);
+          const baseWordsCount = (currentSessionWords || []).filter(w => !w._isGhost).length || safeWPD;
+          const prevCompleted = typeof prev.completedWordsCount === 'number' ? prev.completedWordsCount : Math.max(0, ((prev.currentDay || 1) - 1) * safeWPD);
+          const newCompletedCount = prevCompleted + baseWordsCount;
+          const newDay = Math.floor(newCompletedCount / safeWPD) + 1;
+          return {
+            ...prev,
+            completedWordsCount: newCompletedCount,
+            currentDay: newDay,
+            streak: { count: newStreak, lastDate: todayStr }
+          };
         });
       }
       (setViewFn || setView)('summary');
@@ -158,7 +168,7 @@ window.useSessionLogic = ({
       }
     }
 
-    const { baseWords, ghostWords } = window.computeDailyWords(vocabList, currentDay, wordsPerDay, ghostsPerDay, historicalMistakes);
+    const { baseWords, ghostWords } = window.computeDailyWords(vocabList, currentDay, wordsPerDay, ghostsPerDay, historicalMistakes, state.completedWordsCount);
     if (baseWords.length === 0) return alert('字典為空，請先匯入字庫！');
 
     const initializedWords = baseWords.map(w => ({ ...w, _hasCountedMistake: false }));
@@ -313,14 +323,24 @@ window.useSessionLogic = ({
           const todayStr = new Date().toDateString();
           setState(prev => {
             const last = prev.streak?.lastDate;
-            let newCount = prev.streak?.count || 0;
+            let newStreak = prev.streak?.count || 0;
             if (last !== todayStr) {
               const yesterday = new Date();
               yesterday.setDate(yesterday.getDate() - 1);
-              if (last === yesterday.toDateString()) newCount += 1;
-              else newCount = 1;
+              if (last === yesterday.toDateString()) newStreak += 1;
+              else newStreak = 1;
             }
-            return { ...prev, streak: { count: newCount, lastDate: todayStr } };
+            const safeWPD = Math.max(1, parseInt(wordsPerDay, 10) || 50);
+            const baseWordsCount = (currentSessionWords || []).filter(w => !w._isGhost).length || safeWPD;
+            const prevCompleted = typeof prev.completedWordsCount === 'number' ? prev.completedWordsCount : Math.max(0, ((prev.currentDay || 1) - 1) * safeWPD);
+            const newCompletedCount = prevCompleted + baseWordsCount;
+            const newDay = Math.floor(newCompletedCount / safeWPD) + 1;
+            return {
+              ...prev,
+              completedWordsCount: newCompletedCount,
+              currentDay: newDay,
+              streak: { count: newStreak, lastDate: todayStr }
+            };
           });
         }
         setView('summary');
@@ -465,7 +485,30 @@ window.useSessionLogic = ({
 
   // --- goToNextDay ---
   const goToNextDay = () => {
-    if (sessionType === 'daily') setState(prev => ({ ...prev, currentDay: prev.currentDay + 1 }));
+    if (sessionType === 'daily') {
+      const todayStr = new Date().toDateString();
+      setState(prev => {
+        const last = prev.streak?.lastDate;
+        let newStreak = prev.streak?.count || 0;
+        if (last !== todayStr) {
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          if (last === yesterday.toDateString()) newStreak += 1;
+          else newStreak = 1;
+        }
+        const safeWPD = Math.max(1, parseInt(wordsPerDay, 10) || 50);
+        const baseWordsCount = (currentSessionWords || []).filter(w => !w._isGhost).length || safeWPD;
+        const prevCompleted = typeof prev.completedWordsCount === 'number' ? prev.completedWordsCount : Math.max(0, ((prev.currentDay || 1) - 1) * safeWPD);
+        const newCompletedCount = prevCompleted + baseWordsCount;
+        const newDay = Math.floor(newCompletedCount / safeWPD) + 1;
+        return {
+          ...prev,
+          completedWordsCount: newCompletedCount,
+          currentDay: newDay,
+          streak: { count: newStreak, lastDate: todayStr }
+        };
+      });
+    }
     setView('dashboard');
   };
 

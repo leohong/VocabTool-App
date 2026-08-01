@@ -7,6 +7,7 @@
 window.useVocabState = () => {
   const defaultState = {
     currentDay: 1,
+    completedWordsCount: 0,
     learnedWords: [],
     mistakes: {},
     historicalMistakes: {},
@@ -25,14 +26,6 @@ window.useVocabState = () => {
   const loadDatabaseData = async (targetDb) => {
     console.log(`[Storage] loadDatabaseData for: ${targetDb}`);
     
-    // 讀取狀態
-    const savedState = await window.persistentStorage.loadDbState(targetDb);
-    setState(savedState ? { ...defaultState, ...savedState } : defaultState);
-
-    // 讀取單字庫
-    const savedVocab = await window.persistentStorage.loadDatabase(targetDb);
-    setVocabList(savedVocab && savedVocab.length > 0 ? savedVocab : window.rawVocab || []);
-
     // 讀取每日新字數與幽靈數限制
     const savedWords = await window.persistentStorage.getSetting(`vocab_wordsPerDay_${targetDb}`, 50);
     const safeWords = (typeof savedWords === 'number' && !isNaN(savedWords) && savedWords > 0) ? savedWords : 50;
@@ -41,6 +34,19 @@ window.useVocabState = () => {
     const savedGhosts = await window.persistentStorage.getSetting(`vocab_ghostsPerDay_${targetDb}`, 10);
     const safeGhosts = (typeof savedGhosts === 'number' && !isNaN(savedGhosts) && savedGhosts >= 0) ? savedGhosts : 10;
     setGhostsPerDay(safeGhosts);
+
+    // 讀取狀態
+    const savedState = await window.persistentStorage.loadDbState(targetDb);
+    const loadedState = savedState ? { ...defaultState, ...savedState } : { ...defaultState };
+    if (typeof loadedState.completedWordsCount !== 'number' || isNaN(loadedState.completedWordsCount)) {
+      loadedState.completedWordsCount = Math.max(0, ((loadedState.currentDay || 1) - 1) * safeWords);
+    }
+    loadedState.currentDay = Math.floor(loadedState.completedWordsCount / safeWords) + 1;
+    setState(loadedState);
+
+    // 讀取單字庫
+    const savedVocab = await window.persistentStorage.loadDatabase(targetDb);
+    setVocabList(savedVocab && savedVocab.length > 0 ? savedVocab : window.rawVocab || []);
   };
 
   // 全域初始化讀取 (僅在 App 載入時執行一次)
@@ -90,7 +96,16 @@ window.useVocabState = () => {
 
   React.useEffect(() => {
     if (isStorageLoaded && dbName) {
-      window.persistentStorage.setSetting(`vocab_wordsPerDay_${dbName}`, wordsPerDay);
+      const safeWPD = Math.max(1, parseInt(wordsPerDay, 10) || 50);
+      window.persistentStorage.setSetting(`vocab_wordsPerDay_${dbName}`, safeWPD);
+      setState(prev => {
+        const count = typeof prev.completedWordsCount === 'number' ? prev.completedWordsCount : Math.max(0, ((prev.currentDay || 1) - 1) * safeWPD);
+        const newDay = Math.floor(count / safeWPD) + 1;
+        if (newDay !== prev.currentDay) {
+          return { ...prev, currentDay: newDay };
+        }
+        return prev;
+      });
     }
   }, [wordsPerDay, dbName, isStorageLoaded]);
 
