@@ -115,7 +115,7 @@ window.Dashboard = ({
           onClick={() => setShowPreviewModal(true)}
           className="text-indigo-400 hover:text-indigo-300 underline py-1 transition-colors"
         >
-          🔍 預覽單字 ({(vocabList && vocabList.length) ? Math.min(wordsPerDay, vocabList.length) : 0} 字)
+          🔍 預覽單字 ({(vocabList && vocabList.length) ? Math.min(parseInt(wordsPerDay, 10) || 50, vocabList.length) : 0} 字)
         </button>
         <button
           onClick={() => setShowMistakeModal(true)}

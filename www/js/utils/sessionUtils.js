@@ -38,8 +38,8 @@ window.calculateIndicator = (mistakesTotal, historicalMistakesCount = 0) => {
 // 獲取本日進度單字清單
 window.getDailyWordsList = (vocabList, currentDay, wordsPerDay) => {
   if (!vocabList || vocabList.length === 0) return [];
-  const startIdx = (currentDay - 1) * wordsPerDay;
-  return vocabList.slice(startIdx, startIdx + wordsPerDay);
+  const startIdx = (currentDay - 1) * (parseInt(wordsPerDay, 10) || 50);
+  return vocabList.slice(startIdx, startIdx + (parseInt(wordsPerDay, 10) || 50));
 };
 
 // 獲取過濾搜尋單字清單
@@ -57,9 +57,12 @@ window.getFilteredVocabList = (vocabList, query) => {
 // Pure function: 計算今日基本單字 + 幽靈字，供多個 Hook 共用
 // 不依賴 React state，所有資料皆由參數傳入
 window.computeDailyWords = (vocabList, currentDay, wordsPerDay, ghostsPerDay, historicalMistakes) => {
-  const startIndex = (currentDay - 1) * wordsPerDay;
-  let baseWords = vocabList.slice(startIndex, startIndex + wordsPerDay);
-  if (baseWords.length === 0 && vocabList.length > 0) baseWords = vocabList.slice(-wordsPerDay);
+  // 防禦：onBlur 前 state 可能暫時為空字串或 NaN，強制回落預設值
+  const safeWPD = Math.max(1, parseInt(wordsPerDay, 10) || 50);
+  const safeGPD = Math.max(0, parseInt(ghostsPerDay, 10) || 0);
+  const startIndex = (currentDay - 1) * safeWPD;
+  let baseWords = vocabList.slice(startIndex, startIndex + safeWPD);
+  if (baseWords.length === 0 && vocabList.length > 0) baseWords = vocabList.slice(-safeWPD);
 
   const baseEnSet = new Set(baseWords.map(w => w.en));
   const now = Date.now();
@@ -67,7 +70,7 @@ window.computeDailyWords = (vocabList, currentDay, wordsPerDay, ghostsPerDay, hi
   const ghostWords = Object.values(historicalMistakes || {})
     .filter(h => !h.immune && (now - h.archivedDate) >= (h.interval * 24 * 60 * 60 * 1000))
     .filter(h => !baseEnSet.has(h.data.en))
-    .slice(0, ghostsPerDay)
+    .slice(0, safeGPD)
     .map(h => ({ ...h.data, _hasCountedMistake: false, _isGhost: true, _historyData: h }));
 
   return { baseWords, ghostWords };
