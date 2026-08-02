@@ -121,6 +121,19 @@ window.useVocabState = () => {
     }
   }, [dbList, isStorageLoaded]);
 
+  // 建立全域 O(1) 哈希快取與安全單字 Selector
+  const vocabMap = React.useMemo(() => {
+    const map = new Map();
+    (vocabList || []).forEach(w => {
+      if (w && w.en) map.set(window.normalizeKey(w.en), w);
+    });
+    return map;
+  }, [vocabList]);
+
+  const getWord = React.useCallback((keyOrEntry) => {
+    return window.getWordData(keyOrEntry, vocabMap);
+  }, [vocabMap]);
+
   return {
     dbName,
     setDbName: changeDatabase,
@@ -130,6 +143,8 @@ window.useVocabState = () => {
     setState,
     vocabList,
     setVocabList,
+    vocabMap,
+    getWord,
     wordsPerDay,
     setWordsPerDay,
     ghostsPerDay,
@@ -139,3 +154,4 @@ window.useVocabState = () => {
     initAllData
   };
 };
+

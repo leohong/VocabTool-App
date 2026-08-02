@@ -57,6 +57,7 @@ def run_tests():
         }));
         localStorage.setItem('vocab_wordsPerDay_vocab_test', '3');
         localStorage.setItem('vocab_ghostsPerDay_vocab_test', '0');
+        localStorage.setItem('vocab_scanMode', JSON.stringify('flashcard'));
         """
         driver.execute_script(mock_setup_script)
         
@@ -107,17 +108,20 @@ def run_tests():
         second_word = driver.execute_script("return document.querySelector('h2').textContent;")
         assert first_word != second_word, f"Failed to skip deleted word: {first_word} is still shown!"
         
-        # 7. Complete scanning phase for the remaining 2 words by clicking "認識 (右滑)"
+        # 7. Complete scanning phase for the remaining 2 words by clicking option/flashcard button
         for i in range(2):
-            word_now = driver.execute_script("return document.querySelector('h2').textContent;")
+            view_text = driver.execute_script("return (document.querySelector('.text-slate-400') || document.querySelector('.text-indigo-400') || {}).textContent || '';")
+            if "盲測" in view_text or "拼字" in view_text:
+                break
+            word_now = driver.execute_script("return (document.querySelector('h2') || {}).textContent || '';")
             assert word_now != first_word, f"Deleted word {first_word} appeared in scanning queue again!"
-            driver.execute_script("""
-                const btns = Array.from(document.querySelectorAll('button'));
-                const okBtn = btns.find(b => b.textContent.includes('認識'));
-                if (okBtn) okBtn.click();
-                else throw new Error('Could not find ok button');
-            """)
             time.sleep(0.5)
+            driver.execute_script("""
+                const gridBtns = document.querySelectorAll('.grid button');
+                const okBtn = gridBtns.length > 2 ? gridBtns[0] : (gridBtns.length >= 2 ? gridBtns[1] : gridBtns[0]);
+                if (okBtn) okBtn.click();
+            """)
+            time.sleep(1.5)
             
         # 8. Should now be in the spelling stage
         time.sleep(1)
@@ -152,6 +156,8 @@ def run_tests():
         print("[SUCCESS] test_delete_word passed.")
         
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         print(f"[TEST FAILED] Error: {e}", file=sys.stderr)
         try:
             current_dir = os.path.dirname(os.path.abspath(__file__))

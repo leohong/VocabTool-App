@@ -40,8 +40,9 @@ try:
     driver.execute_script("""
         localStorage.clear();
         localStorage.setItem('vocab_currentDB', 'vocab_2000');
-        localStorage.setItem('vocab_tempSession_vocab_2000', JSON.stringify({
+        localStorage.setItem('vocab_tempSession_vocab_2000_daily', JSON.stringify({
             date: new Date().toDateString(),
+            dbName: 'vocab_2000',
             view: 'spelling',
             sessionType: 'daily',
             queue: [
@@ -59,9 +60,16 @@ try:
         }));
     """)
 
-    print("[Test] Refreshing page to trigger session restore prompt...")
+    print("[Test] Refreshing page and clicking start button to trigger session restore prompt...")
     driver.refresh()
     time.sleep(1)
+
+    # Click start button to trigger session restore confirm dialog
+    driver.execute_script("""
+        const btns = Array.from(document.querySelectorAll('button'));
+        const startBtn = btns.find(b => b.textContent.includes('發動今日特訓') || b.textContent.includes('今日特訓'));
+        if (startBtn) startBtn.click();
+    """)
 
     # Handle window.confirm alert automatically
     alert = wait.until(EC.alert_is_present())

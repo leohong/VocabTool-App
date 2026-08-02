@@ -188,7 +188,7 @@ window.useSessionLogic = ({
     await window.persistentStorage.setSetting(key, null);
 
     if (mistakesTotal === 0) return alert('錯題庫目前完美清空，無需降溫大會考！🎉');
-    const base = [...activeMistakesList].sort(() => 0.5 - Math.random()).slice(0, 50).map(m => ({ ...m.data, _hasCountedMistake: false }));
+    const base = [...activeMistakesList].sort(() => 0.5 - Math.random()).slice(0, 50).map(m => ({ ...window.getWordData(m, vocabList), _hasCountedMistake: false }));
     const shuffled = assignRandomModes(base);
     setSessionType('exam');
     setCurrentSessionWords(shuffled);
@@ -209,7 +209,7 @@ window.useSessionLogic = ({
     await window.persistentStorage.setSetting(key, null);
 
     if (historyTotal === 0) return alert('歷史殿堂目前為空，請先完成日常錯題的雙倍消除！');
-    const base = Object.values(historicalMistakes).sort(() => 0.5 - Math.random()).slice(0, 50).map(h => ({ ...h.data, _hasCountedMistake: false, _isHistoryCheck: true, _historyData: h }));
+    const base = Object.values(historicalMistakes).sort(() => 0.5 - Math.random()).slice(0, 50).map(h => ({ ...window.getWordData(h, vocabList), _hasCountedMistake: false, _isHistoryCheck: true, _historyData: h }));
     const shuffled = assignRandomModes(base);
     setSessionType('history');
     setCurrentSessionWords(shuffled);

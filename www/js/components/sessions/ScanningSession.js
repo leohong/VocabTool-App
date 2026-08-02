@@ -62,8 +62,8 @@ window.ScanningSession = ({
       const targetPos = (currentWord.pos || '').trim().toLowerCase();
 
       // 彙整抽樣池：優先同詞性 (POS Matching) -> 字庫/錯題/歷史殿堂 -> 全域 rawVocab 字庫
-      const mistakesPool = (activeMistakesList || []).map(m => m.data || m);
-      const historyPool = Object.values(historicalMistakes || {}).map(h => h.data || h);
+      const mistakesPool = (activeMistakesList || []).map(m => window.getWordData(m, vocabList));
+      const historyPool = Object.values(historicalMistakes || {}).map(h => window.getWordData(h, vocabList));
       const rawPool = window.rawVocab || [];
       const combinedPool = [...(vocabList || []), ...mistakesPool, ...historyPool, ...rawPool];
 

@@ -71,8 +71,8 @@ window.exportHistoryTXT = (historicalMistakes, vocabList, dbName) => {
   if (historyList.length === 0) return alert("歷史殿堂目前空空如也，無需匯出。");
   let content = `=== 歷史殿堂單字個人紀錄 ===\n\n`;
   historyList.forEach((m, idx) => {
-    const itemData = (m && m.data) || { en: m?.en || '', zh: '[單字已自字典移除]', pos: 'n.', eg: '' };
-    const vocabWord = (vocabList || []).find(w => w.en === itemData.en);
+    const itemData = window.getWordData(m, vocabList);
+    const vocabWord = (vocabList || []).find(w => window.normalizeKey(w.en) === window.normalizeKey(itemData.en));
     const currentEg = (vocabWord && vocabWord.eg) || itemData.eg || '';
     content += `${idx + 1}. 錯誤次數: ${m.mistakesCount || m.totalFails || 0}次 | [${itemData.pos || 'n.'}] ${itemData.en || ''} --> ${itemData.zh || ''}${currentEg ? ` || ${currentEg}` : ''}\n`;
   });
@@ -83,7 +83,7 @@ window.exportHistoryTXT = (historicalMistakes, vocabList, dbName) => {
 // --- 🌐 正規化極致輕量與無鎖相容備份系統 ---
 // ==========================================
 window.exportImportUtils = {
-  // 正規化極致輕量備份打包 (v3.0：剝離 mistakes/historicalMistakes 中重複的 data 實體，保留所有 SRS 冷卻與失誤指標)
+  // 正規化極致輕量備份打包 (v3.1：外鍵 key 導向正規化、剝離重複 data 實體，附帶 schemaVersion 與 meta.schemaSpec 詮釋資料)
   buildNormalizedBackup: (allDatabasesData, globalSettings) => {
     const normalizedDbs = {};
 
@@ -95,8 +95,9 @@ window.exportImportUtils = {
           const normalizedHistorical = {};
           for (const [enKey, mistakeObj] of Object.entries(origState.historicalMistakes)) {
             if (!mistakeObj) continue;
+            const cleanKey = window.normalizeKey(enKey) || enKey;
             const { data, ...rest } = mistakeObj;
-            normalizedHistorical[enKey] = rest;
+            normalizedHistorical[cleanKey] = { ...rest, en: cleanKey };
           }
           origState.historicalMistakes = normalizedHistorical;
         }
@@ -106,8 +107,9 @@ window.exportImportUtils = {
           const normalizedMistakes = {};
           for (const [enKey, mistakeObj] of Object.entries(origState.mistakes)) {
             if (!mistakeObj) continue;
+            const cleanKey = window.normalizeKey(enKey) || enKey;
             const { data, ...rest } = mistakeObj;
-            normalizedMistakes[enKey] = rest;
+            normalizedMistakes[cleanKey] = { ...rest, en: cleanKey };
           }
           origState.mistakes = normalizedMistakes;
         }
@@ -124,9 +126,21 @@ window.exportImportUtils = {
     }
 
     return {
-      version: "3.0",
+      version: "3.1",
+      schemaVersion: "3.1.0",
+      appVersion: "1.9.0",
       backupType: "normalized_system",
       exportDate: new Date().toISOString(),
+      meta: {
+        generator: "VocabTool-App",
+        specNotice: "v3.1 Normalized Foreign Key Architecture",
+        schemaSpec: {
+          wordEntity: ["en", "pos", "zh", "eg"],
+          activeMistake: ["mistakesCount", "correctCount"],
+          historicalMistake: ["mistakesCount", "totalFails", "archivedDate", "step", "interval", "immune"],
+          dbState: ["currentDay", "completedWordsCount", "learnedWords", "mistakes", "historicalMistakes", "streak"]
+        }
+      },
       globalSettings: {
         currentDB: globalSettings.currentDB || 'vocab_2000',
         dbList: globalSettings.dbList || ['vocab_2000', 'vocab_7000'],

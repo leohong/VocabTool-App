@@ -25,6 +25,8 @@ function App() {
     setState,
     vocabList,
     setVocabList,
+    vocabMap,
+    getWord,
     wordsPerDay,
     setWordsPerDay,
     ghostsPerDay,
@@ -1301,6 +1303,7 @@ function App() {
         activeMistakesList={activeMistakesList}
         speak={speak}
         vocabList={vocabList}
+        getWord={getWord}
         startEditing={startEditing}
         handleDeleteWord={handleDeleteWord}
         setState={setState}
@@ -1312,6 +1315,8 @@ function App() {
         historyTotal={historyTotal}
         historicalMistakes={historicalMistakes}
         speak={speak}
+        vocabList={vocabList}
+        getWord={getWord}
       />
 
       <DictModal

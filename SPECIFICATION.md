@@ -48,15 +48,17 @@ interface Word {
 ```
 
 ### 2.3 學習狀態與錯題資料結構 (`DBState`)
-採用 **實體數據正規化 (Entity Normalization)** 設計：錯題集 (`mistakes`) 與歷史殿堂 (`historicalMistakes`) 僅以英文 Key (`en`) 為索引，存放特訓與突襲冷卻狀態指標，離隊並剝離重複的 `data: Word` 實體物件，UI 渲染時動態關聯 `vocabList`：
+採用 **全系統實體數據正規化 (Universal Entity Normalization)** 設計：錯題集 (`mistakes`) 與歷史殿堂 (`historicalMistakes`) 僅以經 `normalizeKey()` 清洗的英文 Key (`en`) 為外鍵索引，存放特訓與突襲冷卻狀態指標，離隊並剝離重複的 `data: Word` 實體物件。UI 渲染與演算法執行時，全系統透過 `getWordData(entry, vocabMap)` 以 $O(1)$ 哈希表動態對齊 `vocabList` 字典：
 
 ```typescript
 interface ActiveMistakeEntry {
+  en?: string;                           // 正規化英文單字 Key
   mistakesCount: number;                 // 當日 / 當前循環失誤次數
   correctCount: number;                  // 當前連續拼對次數
 }
 
 interface HistoricalMistakeEntry {
+  en?: string;                           // 正規化英文單字 Key
   mistakesCount: number;                 // 當次特訓失誤次數
   totalFails: number;                    // 魔王等級 / 累計總失誤次數
   archivedDate: number;                  // 歸檔時間戳記 (Epoch MS)
@@ -80,16 +82,28 @@ interface DBState {
 
 ---
 
-## 3. Web 正規化極致輕量備份規格 (Normalized Backup System v3.0)
+## 3. Web 正規化極致輕量備份規格 (Normalized Backup System v3.1)
 
-### 3.1 JSON 備份檔規格結構 (Version 3.0)
-系統匯出之 `極限完整備份_YYYYMMDD_HHMMSS.json` 遵循 v3.0 正規化備份規範：
+### 3.1 JSON 備份檔規格結構 (Version 3.1 Standard)
+系統匯出之 `極限完整備份_YYYYMMDD_HHMMSS.json` 遵循 v3.1 詮釋資料與正規化備份規範：
 
 ```json
 {
-  "version": "3.0",
+  "version": "3.1",
+  "schemaVersion": "3.1.0",
+  "appVersion": "1.9.0",
   "backupType": "normalized_system",
-  "exportDate": "2026-07-29T23:20:00.000Z",
+  "exportDate": "2026-08-02T12:50:00.000Z",
+  "meta": {
+    "generator": "VocabTool-App",
+    "specNotice": "v3.1 Normalized Foreign Key Architecture",
+    "schemaSpec": {
+      "wordEntity": ["en", "pos", "zh", "eg"],
+      "activeMistake": ["mistakesCount", "correctCount"],
+      "historicalMistake": ["mistakesCount", "totalFails", "archivedDate", "step", "interval", "immune"],
+      "dbState": ["currentDay", "completedWordsCount", "learnedWords", "mistakes", "historicalMistakes", "streak"]
+    }
+  },
   "globalSettings": {
     "currentDB": "vocab_2000",
     "dbList": ["vocab_2000", "vocab_7000"],
@@ -109,10 +123,11 @@ interface DBState {
         "currentDay": 23,
         "learnedWords": ["apple", "banana"],
         "mistakes": {
-          "apple": { "mistakesCount": 2, "correctCount": 1 }
+          "apple": { "en": "apple", "mistakesCount": 2, "correctCount": 1 }
         },
         "historicalMistakes": {
           "apple": {
+            "en": "apple",
             "mistakesCount": 1,
             "totalFails": 1,
             "archivedDate": 1784523606417,

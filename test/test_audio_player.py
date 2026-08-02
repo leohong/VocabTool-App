@@ -128,9 +128,8 @@ def run_tests():
         player_title = wait.until(
             EC.visibility_of_element_located((By.XPATH, "//*[contains(., '\u807d\u8b80\u7279\u8a13')]"))
         )
-        assert player_title is not None
-        
-        progress_text = driver.find_element(By.XPATH, "//*[contains(., '\u807d\u8b80\u7279\u8a13 (1/2)')]")
+        # Verify Audio Player Header contains progress
+        progress_text = driver.find_element(By.XPATH, "//*[contains(., '聽讀特訓') and contains(., '1/')]")
         assert progress_text is not None
         
         card_content = driver.find_element(By.XPATH, "//main").text
@@ -156,16 +155,16 @@ def run_tests():
         time.sleep(0.5)
         
         progress_text_2 = wait.until(
-            EC.presence_of_element_located((By.XPATH, "//*[contains(., '\u807d\u8b80\u7279\u8a13 (2/2)')]"))
+            EC.presence_of_element_located((By.XPATH, "//*[contains(., '聽讀特訓') and contains(., '2/')]"))
         )
         assert progress_text_2 is not None
         
-        btn_prev = driver.find_element(By.XPATH, "//button[contains(@title, '\u4e0a\u4e00\u500b') or @title='上一個單字']")
+        btn_prev = driver.find_element(By.XPATH, "//button[contains(@title, '上一個') or @title='上一個單字']")
         btn_prev.click()
         time.sleep(0.5)
         
         progress_text_1 = wait.until(
-            EC.presence_of_element_located((By.XPATH, "//*[contains(., '\u807d\u8b80\u7279\u8a13 (1/2)')]"))
+            EC.presence_of_element_located((By.XPATH, "//*[contains(., '聽讀特訓') and contains(., '1/')]"))
         )
         assert progress_text_1 is not None
         

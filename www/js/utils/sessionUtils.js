@@ -68,6 +68,35 @@ window.getFilteredVocabList = (vocabList, query) => {
   );
 };
 
+// 全域 Key 正規化處理 (去首尾空格並轉小寫，確保單字 Key 絕對一致)
+window.normalizeKey = (key) => (typeof key === 'string' ? key.trim().toLowerCase() : '');
+
+// 全域 Safe Word Resolver (多階層動態安全單字檢索器)
+// 支持零資料冗餘外鍵 Key 檢索、舊版 hydrated 結構相容與孤兒單字保底
+window.getWordData = (entry, vocabMapOrList) => {
+  if (!entry) return { en: '', pos: 'n.', zh: '[無單字資料]', eg: '' };
+  
+  // 1. 舊版 Hydrated 結構相容 (若 entry 內建 data 或本身為 Word 實體)
+  if (typeof entry === 'object' && entry.data && entry.data.en) return entry.data;
+  if (typeof entry === 'object' && entry.en && entry.zh) return entry;
+  
+  // 2. 提取 en key 並進行全域正規化
+  const rawKey = typeof entry === 'string' ? entry : (entry.en || entry.word || '');
+  const cleanKey = window.normalizeKey(rawKey);
+  if (!cleanKey) return { en: '', pos: 'n.', zh: '[無單字資料]', eg: '' };
+
+  // 3. $O(1)$ 哈希快速查找 (Map) 或 $O(N)$ 陣列查找 (Array)
+  let found = null;
+  if (vocabMapOrList instanceof Map) {
+    found = vocabMapOrList.get(cleanKey);
+  } else if (Array.isArray(vocabMapOrList)) {
+    found = vocabMapOrList.find(w => w && w.en && window.normalizeKey(w.en) === cleanKey);
+  }
+
+  if (found) return found;
+  return { en: rawKey || cleanKey, pos: 'n.', zh: '[單字已自字典移除]', eg: '' };
+};
+
 // Pure function: 計算今日基本單字 + 幽靈字，供多個 Hook 共用
 // 不依賴 React state，所有資料皆由參數傳入
 window.computeDailyWords = (vocabList, currentDay, wordsPerDay, ghostsPerDay, historicalMistakes, completedWordsCount) => {
@@ -98,14 +127,21 @@ window.computeDailyWords = (vocabList, currentDay, wordsPerDay, ghostsPerDay, hi
     baseWords = [];
   }
 
-  const baseEnSet = new Set(baseWords.map(w => w.en));
+  const baseEnSet = new Set(baseWords.map(w => window.normalizeKey(w.en)));
   const now = Date.now();
 
   const ghostWords = Object.values(historicalMistakes || {})
-    .filter(h => !h.immune && (now - h.archivedDate) >= (h.interval * 24 * 60 * 60 * 1000))
-    .filter(h => !baseEnSet.has(h.data.en))
+    .filter(h => h && !h.immune && (now - (h.archivedDate || 0)) >= ((h.interval || 7) * 24 * 60 * 60 * 1000))
+    .filter(h => {
+      const wordData = window.getWordData(h, vocabList);
+      return wordData && wordData.en && !baseEnSet.has(window.normalizeKey(wordData.en));
+    })
     .slice(0, safeGPD)
-    .map(h => ({ ...h.data, _hasCountedMistake: false, _isGhost: true, _historyData: h }));
+    .map(h => {
+      const wordData = window.getWordData(h, vocabList);
+      return { ...wordData, _hasCountedMistake: false, _isGhost: true, _historyData: h };
+    });
 
   return { baseWords, ghostWords, isMasteredMode };
 };
+
