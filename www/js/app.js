@@ -1132,7 +1132,10 @@ function App() {
           mistakesTotal={mistakesTotal}
           streak={streak}
           currentDay={currentDay}
-          setCurrentDay={(d) => setState(prev => ({ ...prev, currentDay: d, completedWordsCount: Math.max(0, (d - 1) * Math.max(1, parseInt(wordsPerDay, 10) || 50)) }))}
+          setCurrentDay={(d) => {
+            setState(prev => ({ ...prev, currentDay: d, completedWordsCount: Math.max(0, (d - 1) * Math.max(1, parseInt(wordsPerDay, 10) || 50)) }));
+            window.persistentStorage.setSetting(`vocab_tempSession_${dbName}_daily`, null);
+          }}
           vocabListLength={vocabList.length}
           wordsPerDay={wordsPerDay}
           view={view}
@@ -1345,6 +1348,7 @@ function App() {
         setInsertPosition={setInsertPosition}
         handleAddWord={handleAddWord}
         currentDay={currentDay}
+        wordsPerDay={wordsPerDay}
       />
 
       <AllPreviewModal

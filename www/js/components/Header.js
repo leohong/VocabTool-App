@@ -69,9 +69,14 @@ window.Header = ({
                   disabled={view !== 'dashboard'}
                   className="bg-slate-900 border border-slate-700 text-indigo-300 rounded-md px-1.5 py-0.5 text-[11px] sm:text-xs focus:outline-none focus:border-indigo-500 font-mono"
                 >
-                  {Array.from({ length: safeLength }, (_, i) => i + 1).map(d => (
-                    <option key={d} value={d}>第 {d} 天</option>
-                  ))}
+                  {Array.from({ length: safeLength }, (_, i) => {
+                    const d = i + 1;
+                    const start = (d - 1) * safeWordsPerDay + 1;
+                    const end = safeVocabLength > 0 ? Math.min(d * safeWordsPerDay, safeVocabLength) : d * safeWordsPerDay;
+                    return (
+                      <option key={d} value={d}>{start} ~ {end} 字</option>
+                    );
+                  })}
                 </select>
               )}
             </div>

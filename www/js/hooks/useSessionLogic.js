@@ -110,8 +110,10 @@ window.useSessionLogic = ({
           }
           const safeWPD = Math.max(1, parseInt(wordsPerDay, 10) || 50);
           const baseWordsCount = (currentSessionWords || []).filter(w => !w._isGhost).length || safeWPD;
-          const prevCompleted = typeof prev.completedWordsCount === 'number' ? prev.completedWordsCount : Math.max(0, ((prev.currentDay || 1) - 1) * safeWPD);
-          const rawCompletedCount = prevCompleted + baseWordsCount;
+          const currentBatch = Math.max(1, parseInt(prev.currentDay, 10) || 1);
+          const batchEndCount = currentBatch * safeWPD;
+          const prevCompleted = typeof prev.completedWordsCount === 'number' ? prev.completedWordsCount : Math.max(0, (currentBatch - 1) * safeWPD);
+          const rawCompletedCount = Math.max(prevCompleted + baseWordsCount, batchEndCount);
           const newCompletedCount = (vocabList && vocabList.length > 0) ? Math.min(vocabList.length, rawCompletedCount) : rawCompletedCount;
           const newDay = Math.floor(newCompletedCount / safeWPD) + 1;
           return {
@@ -141,8 +143,8 @@ window.useSessionLogic = ({
     if (!tempSession) tempSession = await window.persistentStorage.getSetting(`vocab_tempSession_${dbName}`, null);
 
     if (tempSession && tempSession.queue && tempSession.queue.length > 0 && (tempSession.date === window.getLogicalDate() || tempSession.date === new Date().toDateString())) {
-      if ((tempSession.dbName && tempSession.dbName !== dbName) || (tempSession.sessionType && tempSession.sessionType !== 'daily')) {
-        console.log(`[TempSession] Skip today session resume: mismatch (dbName: ${tempSession.dbName} vs ${dbName}, type: ${tempSession.sessionType})`);
+      if ((tempSession.dbName && tempSession.dbName !== dbName) || (tempSession.sessionType && tempSession.sessionType !== 'daily') || (tempSession.currentDay && tempSession.currentDay !== currentDay)) {
+        console.log(`[TempSession] Skip today session resume: mismatch (dbName: ${tempSession.dbName} vs ${dbName}, type: ${tempSession.sessionType}, day: ${tempSession.currentDay} vs ${currentDay})`);
         await window.persistentStorage.setSetting(key, null);
         await window.persistentStorage.setSetting(`vocab_tempSession_${dbName}`, null);
       } else if (window.confirm(`偵測到您有暫停存檔的「今日特訓」進度 (剩餘 ${tempSession.queue.length} 字)，是否繼續從上次暫停的地方開始？\n（選擇「取消」將放棄暫存進度並重新開始）`)) {
@@ -331,8 +333,10 @@ window.useSessionLogic = ({
             }
             const safeWPD = Math.max(1, parseInt(wordsPerDay, 10) || 50);
             const baseWordsCount = (currentSessionWords || []).filter(w => !w._isGhost).length || safeWPD;
-            const prevCompleted = typeof prev.completedWordsCount === 'number' ? prev.completedWordsCount : Math.max(0, ((prev.currentDay || 1) - 1) * safeWPD);
-            const rawCompletedCount = prevCompleted + baseWordsCount;
+            const currentBatch = Math.max(1, parseInt(prev.currentDay, 10) || 1);
+            const batchEndCount = currentBatch * safeWPD;
+            const prevCompleted = typeof prev.completedWordsCount === 'number' ? prev.completedWordsCount : Math.max(0, (currentBatch - 1) * safeWPD);
+            const rawCompletedCount = Math.max(prevCompleted + baseWordsCount, batchEndCount);
             const newCompletedCount = (vocabList && vocabList.length > 0) ? Math.min(vocabList.length, rawCompletedCount) : rawCompletedCount;
             const newDay = Math.floor(newCompletedCount / safeWPD) + 1;
             return {
@@ -470,6 +474,7 @@ window.useSessionLogic = ({
           view,
           sessionType,
           dailyStage,
+          currentDay,
           dbName,
           queue,
           currentSessionWords,
@@ -490,30 +495,6 @@ window.useSessionLogic = ({
 
   // --- goToNextDay ---
   const goToNextDay = () => {
-    if (sessionType === 'daily') {
-      const todayStr = window.getLogicalDate();
-      setState(prev => {
-        const last = prev.streak?.lastDate;
-        let newStreak = prev.streak?.count || 0;
-        if (last !== todayStr) {
-          const yesterday = new Date(Date.now() - 28 * 60 * 60 * 1000).toDateString();
-          if (last === yesterday) newStreak += 1;
-          else newStreak = 1;
-        }
-        const safeWPD = Math.max(1, parseInt(wordsPerDay, 10) || 50);
-        const baseWordsCount = (currentSessionWords || []).filter(w => !w._isGhost).length || safeWPD;
-        const prevCompleted = typeof prev.completedWordsCount === 'number' ? prev.completedWordsCount : Math.max(0, ((prev.currentDay || 1) - 1) * safeWPD);
-        const rawCompletedCount = prevCompleted + baseWordsCount;
-        const newCompletedCount = (vocabList && vocabList.length > 0) ? Math.min(vocabList.length, rawCompletedCount) : rawCompletedCount;
-        const newDay = Math.floor(newCompletedCount / safeWPD) + 1;
-        return {
-          ...prev,
-          completedWordsCount: newCompletedCount,
-          currentDay: newDay,
-          streak: { count: newStreak, lastDate: todayStr }
-        };
-      });
-    }
     setView('dashboard');
   };
 

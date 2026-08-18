@@ -17,7 +17,7 @@ window.SummarySession = ({
           onClick={goToNextDay}
           className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-colors shadow-lg"
         >
-          {sessionType === 'daily' ? '打卡存檔，前往明日排程' : '回到指揮中心'}
+          {sessionType === 'daily' ? '打卡存檔，前往下一批單字' : '回到指揮中心'}
         </button>
       </div>
     </div>

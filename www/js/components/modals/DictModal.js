@@ -26,7 +26,8 @@ window.DictModal = ({
   insertPosition,
   setInsertPosition,
   handleAddWord,
-  currentDay
+  currentDay,
+  wordsPerDay
 }) => {
   if (!showDictModal) return null;
 
@@ -273,7 +274,12 @@ window.DictModal = ({
                           onChange={() => setInsertPosition('current')}
                           className="accent-indigo-500"
                         />
-                        目前天數 (第 {currentDay} 天)
+                        {(() => {
+                          const safeWPD = Math.max(1, parseInt(wordsPerDay, 10) || 50);
+                          const start = ((currentDay || 1) - 1) * safeWPD + 1;
+                          const end = (currentDay || 1) * safeWPD;
+                          return `目前學習範圍 (第 ${start}~${end} 字)`;
+                        })()}
                       </label>
                       <label className="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer">
                         <input

@@ -10,7 +10,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DIRECTORY = os.path.abspath(os.path.join(BASE_DIR, "..", "www"))
+DIRECTORY = os.path.abspath(os.path.join(BASE_DIR, "..", "www")) if os.path.exists(os.path.abspath(os.path.join(BASE_DIR, "..", "www"))) else os.path.abspath(os.path.join(BASE_DIR, ".."))
 
 class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
